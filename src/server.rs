@@ -71,6 +71,6 @@ mod tests {
     #[tokio::test]
     async fn test_ping() {
         let client = TestClient::new(start_server().await.unwrap());
-        client.get::<()>("/status/ping").await.unwrap();
+        assert!(client.get::<()>("/status/ping").await.is_ok());
     }
 }
