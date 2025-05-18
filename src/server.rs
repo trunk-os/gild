@@ -3,7 +3,7 @@ use crate::config::Config;
 use axum::{
     extract::State,
     response::{IntoResponse, Response},
-    routing::get,
+    routing::{get, post},
     Router,
 };
 use axum_serde::Cbor;
@@ -46,7 +46,10 @@ impl Server {
         Ok(Self {
             router: Router::new()
                 .route("/status/ping", get(ping))
-                .route("/zfs/list", get(zfs_list))
+                .route("/zfs/list", post(zfs_list))
+                .route("/zfs/create_volume", post(zfs_create_volume))
+                .route("/zfs/create_dataset", post(zfs_create_dataset))
+                .route("/zfs/destroy", post(zfs_destroy))
                 .with_state(Arc::new(Client::new(config.socket.clone().into())?)),
             config,
         })
@@ -59,19 +62,29 @@ impl Server {
     }
 }
 
+//
+// status handlers
+//
+
 async fn ping(State(client): State<Arc<Client>>) -> Result<()> {
     client.status().await?.ping().await?;
     Ok(())
 }
 
+//
+// zfs handlers
+//
+
 struct ZFSList(Vec<buckle::client::ZFSStat>);
 
 impl IntoResponse for ZFSList {
     fn into_response(self) -> Response {
+        let mut inner = Vec::with_capacity(512);
+        let mut buf = std::io::Cursor::new(&mut inner);
+        ciborium::into_writer(&self.0, &mut buf).unwrap();
+
         Response::builder()
-            .body(axum::body::Body::from(
-                ciborium::cbor!(self.0).unwrap().into_bytes().unwrap(),
-            ))
+            .body(axum::body::Body::from(buf.into_inner().to_vec()))
             .unwrap()
     }
 }
@@ -84,6 +97,27 @@ async fn zfs_list(
     Ok(ZFSList(client.zfs().await?.list(filter).await?))
 }
 
+async fn zfs_create_dataset(
+    State(client): State<Arc<Client>>,
+    Cbor(dataset): Cbor<buckle::client::Dataset>,
+) -> Result<()> {
+    client.zfs().await?.create_dataset(dataset).await?;
+    Ok(())
+}
+
+async fn zfs_create_volume(
+    State(client): State<Arc<Client>>,
+    Cbor(volume): Cbor<buckle::client::Volume>,
+) -> Result<()> {
+    client.zfs().await?.create_volume(volume).await?;
+    Ok(())
+}
+
+async fn zfs_destroy(State(client): State<Arc<Client>>, Cbor(name): Cbor<String>) -> Result<()> {
+    client.zfs().await?.destroy(name).await?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::testutil::{start_server, TestClient};
@@ -92,5 +126,11 @@ mod tests {
     async fn test_ping() {
         let client = TestClient::new(start_server().await.unwrap());
         assert!(client.get::<()>("/status/ping").await.is_ok());
+    }
+
+    #[cfg(feature = "zfs")]
+    mod zfs {
+        #[tokio::test]
+        async fn test_zfs() {}
     }
 }
