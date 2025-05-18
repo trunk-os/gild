@@ -424,9 +424,13 @@ dependencies = [
 name = "gild"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "axum",
  "axum-serde",
  "buckle",
+ "http",
+ "serde",
+ "serde_yaml_ng",
 ]
 
 [[package]]
