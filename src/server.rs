@@ -131,6 +131,10 @@ mod tests {
     #[cfg(feature = "zfs")]
     mod zfs {
         #[tokio::test]
-        async fn test_zfs() {}
+        async fn test_zfs() {
+            let _ = buckle::testutil::destroy_zpool("gild", None);
+            let zpool = buckle::testutil::create_zpool("gild").unwrap();
+            buckle::testutil::destroy_zpool("gild", Some(&zpool)).unwrap();
+        }
     }
 }
