@@ -79,7 +79,7 @@ struct ZFSList(Vec<buckle::client::ZFSStat>);
 
 impl IntoResponse for ZFSList {
     fn into_response(self) -> Response {
-        let mut inner = Vec::with_capacity(512);
+        let mut inner = Vec::with_capacity(65536);
         let mut buf = std::io::Cursor::new(&mut inner);
         ciborium::into_writer(&self.0, &mut buf).unwrap();
 
