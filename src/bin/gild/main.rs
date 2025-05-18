@@ -4,6 +4,10 @@ use gild::server::Server;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    Server::new(Config::default())?.start().await?;
+    let config = Config {
+        listen: "127.0.0.1:3000".parse()?,
+        socket: buckle::testutil::make_server(None).await.unwrap(),
+    };
+    Server::new(config)?.start().await?;
     Ok(())
 }

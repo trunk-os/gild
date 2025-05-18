@@ -45,16 +45,16 @@ pub struct Server {
 impl Server {
     pub fn new(config: Config) -> anyhow::Result<Self> {
         Ok(Self {
-            config,
             router: Router::new()
                 .route("/status/ping", get(ping))
-                .with_state(Arc::new(Client::new("/tmp/buckled.sock".into())?)),
+                .with_state(Arc::new(Client::new(config.socket.clone().into())?)),
+            config,
         })
     }
 
     pub async fn start(&self) -> anyhow::Result<()> {
         // run our app with hyper, listening globally on port 3000
-        let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+        let listener = tokio::net::TcpListener::bind(self.config.listen).await?;
         Ok(axum::serve(listener, self.router.clone()).await?)
     }
 }
@@ -62,4 +62,15 @@ impl Server {
 async fn ping(State(client): State<Arc<Client>>) -> Result<()> {
     client.status().await?.ping().await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::testutil::{start_server, TestClient};
+
+    #[tokio::test]
+    async fn test_ping() {
+        let client = TestClient::new(start_server().await.unwrap());
+        client.get::<()>("/status/ping").await.unwrap();
+    }
 }

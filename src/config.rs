@@ -17,9 +17,9 @@ fn default_listen() -> SocketAddr {
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     #[serde(default = "default_listen")]
-    listen: SocketAddr,
+    pub listen: SocketAddr,
     #[serde(default = "default_socket")]
-    socket: std::path::PathBuf,
+    pub socket: std::path::PathBuf,
 }
 
 impl Default for Config {
