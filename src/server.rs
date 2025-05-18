@@ -51,6 +51,12 @@ impl Server {
                 .with_state(Arc::new(Client::new("/tmp/buckled.sock".into())?)),
         })
     }
+
+    pub async fn start(&self) -> anyhow::Result<()> {
+        // run our app with hyper, listening globally on port 3000
+        let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+        Ok(axum::serve(listener, self.router.clone()).await?)
+    }
 }
 
 async fn ping(State(client): State<Arc<Client>>) -> Result<()> {

@@ -431,6 +431,7 @@ dependencies = [
  "http",
  "serde",
  "serde_yaml_ng",
+ "tokio",
 ]
 
 [[package]]

@@ -3,10 +3,23 @@ use serde::Deserialize;
 use std::net::SocketAddr;
 
 const DEFAULT_CONFIG_PATH: &str = "/trunk/gild.yaml";
+const DEFAULT_BUCKLE_PATH: &str = "/tmp/buckled.sock";
+const DEFAULT_LISTEN: &str = "0.0.0.0:3000";
+
+fn default_socket() -> std::path::PathBuf {
+    DEFAULT_BUCKLE_PATH.into()
+}
+
+fn default_listen() -> SocketAddr {
+    DEFAULT_LISTEN.parse().unwrap()
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
+    #[serde(default = "default_listen")]
     listen: SocketAddr,
+    #[serde(default = "default_socket")]
+    socket: std::path::PathBuf,
 }
 
 impl Default for Config {
