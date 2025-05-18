@@ -6,12 +6,13 @@ use axum::{
     routing::get,
     Router,
 };
+use axum_serde::Cbor;
 use buckle::client::Client;
 use http::status::StatusCode;
 use std::sync::Arc;
 
 // axum requires a ton of boilerplate to do anything sane with a handler
-// this is it. ah, rust.
+// this is it. ah, rust. this literally all gets compiled out
 type Result<T> = core::result::Result<T, AppError>;
 
 struct AppError(anyhow::Error);
@@ -45,6 +46,7 @@ impl Server {
         Ok(Self {
             router: Router::new()
                 .route("/status/ping", get(ping))
+                .route("/zfs/list", get(zfs_list))
                 .with_state(Arc::new(Client::new(config.socket.clone().into())?)),
             config,
         })
@@ -60,6 +62,26 @@ impl Server {
 async fn ping(State(client): State<Arc<Client>>) -> Result<()> {
     client.status().await?.ping().await?;
     Ok(())
+}
+
+struct ZFSList(Vec<buckle::client::ZFSStat>);
+
+impl IntoResponse for ZFSList {
+    fn into_response(self) -> Response {
+        Response::builder()
+            .body(axum::body::Body::from(
+                ciborium::cbor!(self.0).unwrap().into_bytes().unwrap(),
+            ))
+            .unwrap()
+    }
+}
+
+async fn zfs_list(
+    State(client): State<Arc<Client>>,
+    Cbor(filter): Cbor<String>,
+) -> Result<ZFSList> {
+    let filter = if filter.len() > 0 { Some(filter) } else { None };
+    Ok(ZFSList(client.zfs().await?.list(filter).await?))
 }
 
 #[cfg(test)]

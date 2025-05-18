@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 buckle = { version = "*", git = "https://github.com/trunk-os/buckle", features = [ "zfs", "test" ] }
-axum = { version = "*", features = [ "tokio", "http1", "http2" ] }
+axum = { version = "*", features = [ "tokio", "http1", "http2", "macros" ] }
 axum-serde = { version = "*", features = [ "cbor" ] }
 serde = { version = "*", features = [ "derive" ] }
 serde_yaml_ng = "*"
