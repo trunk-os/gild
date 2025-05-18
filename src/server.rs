@@ -10,13 +10,12 @@ use buckle::client::Client;
 use http::status::StatusCode;
 use std::sync::Arc;
 
+// axum requires a ton of boilerplate to do anything sane with a handler
+// this is it. ah, rust.
 type Result<T> = core::result::Result<T, AppError>;
 
-// Make our own error that wraps `anyhow::Error`.
 struct AppError(anyhow::Error);
 
-// This enables using `?` on functions that return `Result<_, anyhow::Error>` to turn them into
-// `Result<_, AppError>`. That way you don't need to do that manually.
 impl<E> From<E> for AppError
 where
     E: Into<anyhow::Error>,
@@ -26,7 +25,6 @@ where
     }
 }
 
-// Tell axum how to convert `AppError` into a response.
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         (
