@@ -351,7 +351,7 @@ dependencies = [
 [[package]]
 name = "buckle"
 version = "0.1.0"
-source = "git+https://github.com/trunk-os/buckle#380f4a9226440528c8306774c8c1ed63e70e5d45"
+source = "git+https://github.com/trunk-os/buckle#17e3f5190608a1314c5d77af939b44e2759a95e1"
 dependencies = [
  "anyhow",
  "clap",
@@ -3217,9 +3217,9 @@ dependencies = [
 
 [[package]]
 name = "windows-core"
-version = "0.61.0"
+version = "0.61.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4763c1de310c86d75a878046489e2e5ba02c649d185f21c67d4cf8a56d098980"
+checksum = "46ec44dc15085cea82cf9c78f85a9114c463a369786585ad2882d1ff0b0acf40"
 dependencies = [
  "windows-implement",
  "windows-interface",
