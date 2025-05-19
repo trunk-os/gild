@@ -39,7 +39,12 @@ pub(crate) async fn zfs_list(
     State(client): State<Arc<Client>>,
     Cbor(filter): Cbor<String>,
 ) -> Result<ZFSList> {
-    let filter = if filter.len() > 0 { Some(filter) } else { None };
+    let filter = if filter.is_empty() {
+        None
+    } else {
+        Some(filter)
+    };
+
     Ok(ZFSList(client.zfs().await?.list(filter).await?))
 }
 

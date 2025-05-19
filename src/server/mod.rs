@@ -36,7 +36,7 @@ impl Server {
                 .route("/zfs/create_volume", post(zfs_create_volume))
                 .route("/zfs/create_dataset", post(zfs_create_dataset))
                 .route("/zfs/destroy", post(zfs_destroy))
-                .with_state(Arc::new(Client::new(config.socket.clone().into())?))
+                .with_state(Arc::new(Client::new(config.socket.clone())?))
                 .layer(
                     ServiceBuilder::new().layer(
                         CorsLayer::new()
