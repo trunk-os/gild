@@ -1,6 +1,6 @@
 use crate::{config::Config, server::Server};
-use anyhow::{anyhow, Result};
-use buckle::testutil::make_server;
+use anyhow::Result;
+use buckle::{config::ZFSConfig, testutil::make_server};
 use reqwest::Client;
 use serde::{
     de::{Deserialize, DeserializeOwned},
@@ -8,29 +8,37 @@ use serde::{
 };
 use std::net::SocketAddr;
 
-pub fn find_listener() -> Result<SocketAddr> {
-    for port in 3000..32767 {
+pub async fn find_listener() -> Result<(tokio::net::TcpListener, SocketAddr)> {
+    loop {
+        let port: u16 = rand::random();
         let addr: SocketAddr = format!("127.0.0.1:{}", port).parse()?;
-        match std::net::TcpListener::bind(addr) {
-            Ok(_) => return Ok(addr),
+        match tokio::net::TcpListener::bind(addr).await {
+            Ok(x) => return Ok((x, addr)),
             _ => {}
         }
     }
-
-    Err(anyhow!("no open port found"))
 }
 
-pub async fn start_server() -> Result<SocketAddr> {
-    let addr = find_listener()?;
+pub async fn start_server(poolname: Option<String>) -> Result<SocketAddr> {
+    let (socket, addr) = find_listener().await?;
+    drop(socket);
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
     tokio::spawn(async move {
-        Server::new(Config {
+        let config = Config {
             listen: addr,
-            socket: make_server(None).await.unwrap(),
-        })
-        .unwrap()
-        .start()
-        .await
-        .unwrap()
+            socket: make_server(if let Some(poolname) = poolname {
+                Some(buckle::config::Config {
+                    socket: buckle::testutil::find_listener().unwrap(),
+                    zfs: ZFSConfig { pool: poolname },
+                })
+            } else {
+                None
+            })
+            .await
+            .unwrap(),
+        };
+
+        Server::new(config).unwrap().start().await.unwrap()
     });
     tokio::time::sleep(std::time::Duration::from_millis(200)).await;
     Ok(addr)

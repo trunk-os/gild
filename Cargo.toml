@@ -16,6 +16,7 @@ ciborium = "*"
 
 [dev-dependencies]
 reqwest = "*"
+rand = "*"
 
 [features]
 zfs = []
