@@ -11,6 +11,7 @@ use axum::{
     Router,
 };
 use buckle::client::Client;
+use http::{header::*, Method};
 use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
@@ -40,9 +41,9 @@ impl Server {
                 .layer(
                     ServiceBuilder::new().layer(
                         CorsLayer::new()
-                            .allow_methods([http::Method::GET, http::Method::POST])
+                            .allow_methods([Method::GET, Method::POST])
                             .allow_origin(Any)
-                            .allow_headers([http::header::CONTENT_TYPE, http::header::ACCEPT])
+                            .allow_headers([CONTENT_TYPE, ACCEPT])
                             .allow_private_network(true),
                     ),
                 ),
