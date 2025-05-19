@@ -1,18 +1,17 @@
-use super::axum_support::*;
+use super::{axum_support::*, ServerState};
 use axum::{
     extract::State,
     response::{IntoResponse, Response},
 };
 use axum_serde::Cbor;
-use buckle::client::Client;
 use std::sync::Arc;
 
 //
 // status handlers
 //
 
-pub(crate) async fn ping(State(client): State<Arc<Client>>) -> Result<()> {
-    client.status().await?.ping().await?;
+pub(crate) async fn ping(State(state): State<Arc<ServerState>>) -> Result<()> {
+    state.client.status().await?.ping().await?;
     Ok(())
 }
 
@@ -36,7 +35,7 @@ impl IntoResponse for ZFSList {
 }
 
 pub(crate) async fn zfs_list(
-    State(client): State<Arc<Client>>,
+    State(state): State<Arc<ServerState>>,
     Cbor(filter): Cbor<String>,
 ) -> Result<ZFSList> {
     let filter = if filter.is_empty() {
@@ -45,30 +44,30 @@ pub(crate) async fn zfs_list(
         Some(filter)
     };
 
-    Ok(ZFSList(client.zfs().await?.list(filter).await?))
+    Ok(ZFSList(state.client.zfs().await?.list(filter).await?))
 }
 
 pub(crate) async fn zfs_create_dataset(
-    State(client): State<Arc<Client>>,
+    State(state): State<Arc<ServerState>>,
     Cbor(dataset): Cbor<buckle::client::Dataset>,
 ) -> Result<()> {
-    client.zfs().await?.create_dataset(dataset).await?;
+    state.client.zfs().await?.create_dataset(dataset).await?;
     Ok(())
 }
 
 pub(crate) async fn zfs_create_volume(
-    State(client): State<Arc<Client>>,
+    State(state): State<Arc<ServerState>>,
     Cbor(volume): Cbor<buckle::client::Volume>,
 ) -> Result<()> {
-    client.zfs().await?.create_volume(volume).await?;
+    state.client.zfs().await?.create_volume(volume).await?;
     Ok(())
 }
 
 pub(crate) async fn zfs_destroy(
-    State(client): State<Arc<Client>>,
+    State(state): State<Arc<ServerState>>,
     Cbor(name): Cbor<String>,
 ) -> Result<()> {
-    client.zfs().await?.destroy(name).await?;
+    state.client.zfs().await?.destroy(name).await?;
     Ok(())
 }
 

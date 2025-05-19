@@ -17,6 +17,11 @@ use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
 #[derive(Debug, Clone)]
+pub struct ServerState {
+    client: Client,
+}
+
+#[derive(Debug, Clone)]
 pub struct Server {
     config: Config,
     router: Router,
@@ -42,7 +47,9 @@ impl Server {
                     "/user/{id}",
                     delete(remove_user).get(get_user).post(update_user),
                 )
-                .with_state(Arc::new(Client::new(config.socket.clone())?))
+                .with_state(Arc::new(ServerState {
+                    client: Client::new(config.socket.clone())?,
+                }))
                 .layer(
                     ServiceBuilder::new().layer(
                         CorsLayer::new()
