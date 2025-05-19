@@ -39,7 +39,7 @@ impl Server {
                 .route("/zfs/destroy", post(zfs_destroy))
                 .route("/users", put(create_user).get(list_users))
                 .route(
-                    "/user/:id",
+                    "/user/{id}",
                     delete(remove_user).get(get_user).post(update_user),
                 )
                 .with_state(Arc::new(Client::new(config.socket.clone())?))
