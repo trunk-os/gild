@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use crate::config::Config;
 use axum::{
     extract::State,
@@ -10,6 +9,8 @@ use axum_serde::Cbor;
 use buckle::client::Client;
 use http::status::StatusCode;
 use std::sync::Arc;
+use tower::ServiceBuilder;
+use tower_http::cors::{Any, CorsLayer};
 
 // axum requires a ton of boilerplate to do anything sane with a handler
 // this is it. ah, rust. this literally all gets compiled out
@@ -50,7 +51,16 @@ impl Server {
                 .route("/zfs/create_volume", post(zfs_create_volume))
                 .route("/zfs/create_dataset", post(zfs_create_dataset))
                 .route("/zfs/destroy", post(zfs_destroy))
-                .with_state(Arc::new(Client::new(config.socket.clone().into())?)),
+                .with_state(Arc::new(Client::new(config.socket.clone().into())?))
+                .layer(
+                    ServiceBuilder::new().layer(
+                        CorsLayer::new()
+                            .allow_methods([http::Method::GET, http::Method::POST])
+                            .allow_origin(Any)
+                            .allow_headers([http::header::CONTENT_TYPE, http::header::ACCEPT])
+                            .allow_private_network(true),
+                    ),
+                ),
             config,
         })
     }

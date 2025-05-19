@@ -13,6 +13,8 @@ anyhow = "*"
 http = "*"
 tokio = { version = "*", features = [ "full" ] }
 ciborium = "*"
+tower = "*"
+tower-http = { version = "*", features = [ "cors" ] }
 
 [dev-dependencies]
 reqwest = "*"
