@@ -5,6 +5,7 @@ mod tests;
 use self::handlers::*;
 
 use crate::config::Config;
+use anyhow::Result;
 use axum::{
     routing::{get, post},
     Router,
@@ -14,13 +15,20 @@ use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
+#[derive(Debug, Clone)]
 pub struct Server {
     config: Config,
     router: Router,
 }
 
+impl Default for Server {
+    fn default() -> Self {
+        Self::new(Config::default()).unwrap()
+    }
+}
+
 impl Server {
-    pub fn new(config: Config) -> anyhow::Result<Self> {
+    pub fn new(config: Config) -> Result<Self> {
         Ok(Self {
             router: Router::new()
                 .route("/status/ping", get(ping))
@@ -42,8 +50,7 @@ impl Server {
         })
     }
 
-    pub async fn start(&self) -> anyhow::Result<()> {
-        // run our app with hyper, listening globally on port 3000
+    pub async fn start(&self) -> Result<()> {
         let listener = tokio::net::TcpListener::bind(self.config.listen).await?;
         Ok(axum::serve(listener, self.router.clone()).await?)
     }
