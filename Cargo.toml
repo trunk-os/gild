@@ -24,6 +24,7 @@ chrono = "*"
 [dev-dependencies]
 reqwest = "*"
 rand = "*"
+tempfile = "*"
 
 [features]
 zfs = []

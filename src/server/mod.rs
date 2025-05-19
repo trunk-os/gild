@@ -5,6 +5,7 @@ mod tests;
 use self::handlers::*;
 
 use crate::config::Config;
+use crate::db::DB;
 use anyhow::Result;
 use axum::{
     routing::{delete, get, post, put},
@@ -19,6 +20,8 @@ use tower_http::cors::{Any, CorsLayer};
 #[derive(Debug, Clone)]
 pub struct ServerState {
     client: Client,
+    #[allow(unused)]
+    db: DB,
 }
 
 #[derive(Debug, Clone)]
@@ -27,14 +30,8 @@ pub struct Server {
     router: Router,
 }
 
-impl Default for Server {
-    fn default() -> Self {
-        Self::new(Config::default()).unwrap()
-    }
-}
-
 impl Server {
-    pub fn new(config: Config) -> Result<Self> {
+    pub async fn new(config: Config) -> Result<Self> {
         Ok(Self {
             router: Router::new()
                 .route("/status/ping", get(ping))
@@ -49,6 +46,7 @@ impl Server {
                 )
                 .with_state(Arc::new(ServerState {
                     client: Client::new(config.socket.clone())?,
+                    db: DB::new(&config).await?,
                 }))
                 .layer(
                     ServiceBuilder::new().layer(

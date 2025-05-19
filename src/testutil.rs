@@ -7,6 +7,7 @@ use serde::{
     Serialize,
 };
 use std::net::SocketAddr;
+use tempfile::NamedTempFile;
 
 pub async fn find_listener() -> Result<(tokio::net::TcpListener, SocketAddr)> {
     loop {
@@ -20,6 +21,7 @@ pub async fn find_listener() -> Result<(tokio::net::TcpListener, SocketAddr)> {
 }
 
 pub async fn start_server(poolname: Option<String>) -> Result<SocketAddr> {
+    let (_, dbfile) = NamedTempFile::new_in("tmp")?.keep()?;
     let (socket, addr) = find_listener().await?;
     drop(socket);
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
@@ -36,9 +38,10 @@ pub async fn start_server(poolname: Option<String>) -> Result<SocketAddr> {
             })
             .await
             .unwrap(),
+            db: dbfile,
         };
 
-        Server::new(config).unwrap().start().await.unwrap()
+        Server::new(config).await.unwrap().start().await.unwrap()
     });
     tokio::time::sleep(std::time::Duration::from_millis(200)).await;
     Ok(addr)

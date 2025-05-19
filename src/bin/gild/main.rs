@@ -9,6 +9,6 @@ async fn main() -> Result<()> {
         listen: "0.0.0.0:3000".parse()?,
         socket: buckle::testutil::make_server(None).await.unwrap(),
     };
-    Server::new(config)?.start().await?;
+    Server::new(config).await?.start().await?;
     Ok(())
 }
