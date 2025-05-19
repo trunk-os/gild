@@ -4,7 +4,12 @@ use std::net::SocketAddr;
 
 const DEFAULT_CONFIG_PATH: &str = "/trunk/gild.yaml";
 const DEFAULT_BUCKLE_PATH: &str = "/tmp/buckled.sock";
+const DEFAULT_DB: &str = "/gild.db";
 const DEFAULT_LISTEN: &str = "0.0.0.0:3000";
+
+fn default_db() -> std::path::PathBuf {
+    DEFAULT_DB.into()
+}
 
 fn default_socket() -> std::path::PathBuf {
     DEFAULT_BUCKLE_PATH.into()
@@ -20,6 +25,8 @@ pub struct Config {
     pub listen: SocketAddr,
     #[serde(default = "default_socket")]
     pub socket: std::path::PathBuf,
+    #[serde(default = "default_db")]
+    pub db: std::path::PathBuf,
 }
 
 impl Default for Config {

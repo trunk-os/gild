@@ -20,6 +20,7 @@ welds = { version = "*", features = [ "sqlite", "mock", "tracing", "check", "det
 welds-connections = { version = "*", features = [ "full" ] }
 welds-macros = "*"
 argon2 = "*"
+uuid = "*"
 
 [dev-dependencies]
 reqwest = "*"
