@@ -13,9 +13,13 @@ impl DB {
             connect(&format!("sqlite://{}", config.db.to_str().unwrap())).await?,
         ))
     }
+
+    pub(crate) async fn migrate(&self) -> Result<()> {
+        Ok(())
+    }
 }
 
-mod models {
+pub(crate) mod models {
     use welds::WeldsModel;
 
     #[derive(Debug, WeldsModel)]
@@ -28,5 +32,14 @@ mod models {
         email: Option<String>,
         phone: Option<String>,
         password: Vec<u8>,
+    }
+
+    #[derive(Debug, WeldsModel)]
+    pub(crate) struct Session {
+        #[welds(rename = "session_id")]
+        #[welds(primary_key)]
+        id: uuid::Uuid,
+        secret: Vec<u8>,
+        expires: chrono::DateTime<chrono::Local>,
     }
 }

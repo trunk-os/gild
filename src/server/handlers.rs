@@ -71,3 +71,37 @@ pub(crate) async fn zfs_destroy(
     client.zfs().await?.destroy(name).await?;
     Ok(())
 }
+
+//
+// Auth handlers
+//
+
+#[allow(unused)]
+pub(crate) async fn create_user() -> Result<()> {
+    Ok(())
+}
+
+#[allow(unused)]
+pub(crate) async fn remove_user() -> Result<()> {
+    Ok(())
+}
+
+#[allow(unused)]
+pub(crate) async fn list_users() -> Result<()> {
+    Ok(())
+}
+
+#[allow(unused)]
+pub(crate) async fn get_user() -> Result<()> {
+    Ok(())
+}
+
+#[allow(unused)]
+pub(crate) async fn update_user() -> Result<()> {
+    Ok(())
+}
+
+#[allow(unused)]
+pub(crate) async fn authenticate_user() -> Result<()> {
+    Ok(())
+}

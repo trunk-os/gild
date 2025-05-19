@@ -7,7 +7,7 @@ use self::handlers::*;
 use crate::config::Config;
 use anyhow::Result;
 use axum::{
-    routing::{get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use buckle::client::Client;
@@ -37,6 +37,11 @@ impl Server {
                 .route("/zfs/create_volume", post(zfs_create_volume))
                 .route("/zfs/create_dataset", post(zfs_create_dataset))
                 .route("/zfs/destroy", post(zfs_destroy))
+                .route("/users", put(create_user).get(list_users))
+                .route(
+                    "/user/:id",
+                    delete(remove_user).get(get_user).post(update_user),
+                )
                 .with_state(Arc::new(Client::new(config.socket.clone())?))
                 .layer(
                     ServiceBuilder::new().layer(
