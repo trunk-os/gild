@@ -20,10 +20,11 @@ welds = { version = "*", features = [ "sqlite", "mock", "tracing", "check", "det
 argon2 = "*"
 uuid = "*"
 chrono = "*"
+rand_core = { version = "*", features = [ "getrandom" ] }
+rand = "*"
 
 [dev-dependencies]
 reqwest = "*"
-rand = "*"
 tempfile = "*"
 
 [features]
