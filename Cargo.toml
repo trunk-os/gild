@@ -15,6 +15,10 @@ tokio = { version = "*", features = [ "full" ] }
 ciborium = "*"
 tower = "*"
 tower-http = { version = "*", features = [ "cors" ] }
+sqlx = { version = "*", features = [ "runtime-tokio", "sqlite", "uuid", "derive", "chrono", "macros" ] }
+welds = { version = "*", features = [ "sqlite", "mock", "tracing", "check", "detect", "migrations", "unstable-api" ] }
+welds-connections = { version = "*", features = [ "full" ] }
+welds-macros = "*"
 
 [dev-dependencies]
 reqwest = "*"
