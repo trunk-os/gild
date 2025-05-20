@@ -50,4 +50,8 @@ impl DB {
         Sqlite::create_database(&format!("sqlite:{}", config.db.to_str().unwrap())).await?;
         Ok(())
     }
+
+    pub fn handle(&self) -> &SqliteClient {
+        &self.handle
+    }
 }

@@ -25,3 +25,21 @@ impl IntoResponse for AppError {
             .into_response()
     }
 }
+
+#[derive(Debug, Clone, Default)]
+pub(crate) struct CborOut<T>(pub T);
+
+impl<T> IntoResponse for CborOut<T>
+where
+    T: serde::Serialize,
+{
+    fn into_response(self) -> Response {
+        let mut inner = Vec::with_capacity(65536);
+        let mut buf = std::io::Cursor::new(&mut inner);
+        ciborium::into_writer(&self.0, &mut buf).unwrap();
+
+        Response::builder()
+            .body(axum::body::Body::from(buf.into_inner().to_vec()))
+            .unwrap()
+    }
+}

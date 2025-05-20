@@ -8,7 +8,7 @@ use argon2::{
 use serde::{Deserialize, Serialize};
 use welds::WeldsModel;
 
-#[derive(Debug, WeldsModel, Serialize, Deserialize)]
+#[derive(Debug, WeldsModel, Default, Serialize, Deserialize)]
 #[welds(table = "users")]
 #[welds(HasMany(sessions, Session, "user_id"))]
 pub(crate) struct User {
@@ -21,6 +21,9 @@ pub(crate) struct User {
     pub phone: Option<String>,
     #[serde(skip)]
     password: Vec<u8>,
+    #[welds(ignore)]
+    #[serde(rename = "password")]
+    plaintext_password: Option<String>,
 }
 
 impl User {
@@ -46,7 +49,7 @@ impl User {
     }
 }
 
-#[derive(Debug, WeldsModel, Serialize, Deserialize)]
+#[derive(Debug, WeldsModel, Default, Serialize, Deserialize)]
 #[welds(table = "sessions")]
 #[welds(BelongsTo(user, User, "user_id"))]
 pub(crate) struct Session {

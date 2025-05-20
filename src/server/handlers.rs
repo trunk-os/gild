@@ -1,10 +1,12 @@
+use crate::db::models::User;
+
 use super::{axum_support::*, ServerState};
-use axum::{
-    extract::State,
-    response::{IntoResponse, Response},
-};
+use anyhow::anyhow;
+use axum::extract::{Path, State};
 use axum_serde::Cbor;
+use buckle::client::ZFSStat;
 use std::sync::Arc;
+use welds::{exts::VecStateExt, state::DbState};
 
 //
 // status handlers
@@ -18,33 +20,18 @@ pub(crate) async fn ping(State(state): State<Arc<ServerState>>) -> Result<()> {
 //
 // zfs handlers
 //
-
-#[derive(Debug, Clone, Default)]
-pub(crate) struct ZFSList(Vec<buckle::client::ZFSStat>);
-
-impl IntoResponse for ZFSList {
-    fn into_response(self) -> Response {
-        let mut inner = Vec::with_capacity(65536);
-        let mut buf = std::io::Cursor::new(&mut inner);
-        ciborium::into_writer(&self.0, &mut buf).unwrap();
-
-        Response::builder()
-            .body(axum::body::Body::from(buf.into_inner().to_vec()))
-            .unwrap()
-    }
-}
-
+//
 pub(crate) async fn zfs_list(
     State(state): State<Arc<ServerState>>,
     Cbor(filter): Cbor<String>,
-) -> Result<ZFSList> {
+) -> Result<CborOut<Vec<ZFSStat>>> {
     let filter = if filter.is_empty() {
         None
     } else {
         Some(filter)
     };
 
-    Ok(ZFSList(state.client.zfs().await?.list(filter).await?))
+    Ok(CborOut(state.client.zfs().await?.list(filter).await?))
 }
 
 pub(crate) async fn zfs_create_dataset(
@@ -75,32 +62,58 @@ pub(crate) async fn zfs_destroy(
 // Auth handlers
 //
 
-#[allow(unused)]
-pub(crate) async fn create_user() -> Result<()> {
-    Ok(())
+pub(crate) async fn create_user(
+    State(state): State<Arc<ServerState>>,
+    Cbor(user): Cbor<User>,
+) -> Result<CborOut<User>> {
+    let mut user = DbState::new_uncreated(user);
+    user.save(state.db.handle()).await?;
+    Ok(CborOut(user.into_inner()))
 }
 
-#[allow(unused)]
-pub(crate) async fn remove_user() -> Result<()> {
-    Ok(())
+pub(crate) async fn remove_user(
+    State(state): State<Arc<ServerState>>,
+    Path(id): Path<u32>,
+) -> Result<()> {
+    if let Some(mut user) = User::find_by_id(state.db.handle(), id).await? {
+        Ok(user.delete(state.db.handle()).await?)
+    } else {
+        Err(anyhow!("invalid user").into())
+    }
 }
 
-#[allow(unused)]
-pub(crate) async fn list_users() -> Result<()> {
-    Ok(())
+pub(crate) async fn list_users(
+    State(state): State<Arc<ServerState>>,
+) -> Result<CborOut<Vec<User>>> {
+    Ok(CborOut(
+        User::all().run(state.db.handle()).await?.into_inners(),
+    ))
 }
 
-#[allow(unused)]
-pub(crate) async fn get_user() -> Result<()> {
-    Ok(())
+pub(crate) async fn get_user(
+    State(state): State<Arc<ServerState>>,
+    Path(id): Path<u32>,
+) -> Result<CborOut<User>> {
+    Ok(CborOut(
+        User::find_by_id(state.db.handle(), id)
+            .await?
+            .ok_or(anyhow!("invalid user"))?
+            .into_inner(),
+    ))
 }
 
-#[allow(unused)]
-pub(crate) async fn update_user() -> Result<()> {
-    Ok(())
-}
-
-#[allow(unused)]
-pub(crate) async fn authenticate_user() -> Result<()> {
-    Ok(())
+pub(crate) async fn update_user(
+    State(state): State<Arc<ServerState>>,
+    Path(id): Path<u32>,
+    Cbor(mut user): Cbor<User>,
+) -> Result<()> {
+    if let Some(fetched) = User::find_by_id(state.db.handle(), id).await? {
+        // replace the id, but everything else is editable.
+        let inner = fetched.into_inner();
+        user.id = inner.id;
+        let mut user: DbState<User> = DbState::db_loaded(user);
+        Ok(user.save(state.db.handle()).await?)
+    } else {
+        Err(anyhow!("invalid user").into())
+    }
 }

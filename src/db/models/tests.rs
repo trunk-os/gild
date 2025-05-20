@@ -49,6 +49,7 @@ async fn user_basic() {
             email: Some("erikhollensbe@proton.me".into()),
             phone: Some("800-867-5309".into()),
             password: Vec::new(),
+            plaintext_password: None,
         }),
         DbState::new_uncreated(User {
             id: 0,
@@ -57,6 +58,7 @@ async fn user_basic() {
             email: Some("scarlett@hollensbe.org".into()),
             phone: None,
             password: Vec::new(),
+            plaintext_password: None,
         }),
         DbState::new_uncreated(User {
             id: 0,
@@ -65,6 +67,7 @@ async fn user_basic() {
             email: Some("christopher@maujean.org".into()),
             phone: None,
             password: Vec::new(),
+            plaintext_password: None,
         }),
         DbState::new_uncreated(User {
             id: 0,
@@ -73,6 +76,7 @@ async fn user_basic() {
             email: None,
             phone: None,
             password: Vec::new(),
+            plaintext_password: None,
         }),
         DbState::new_uncreated(User {
             id: 0,
@@ -81,6 +85,7 @@ async fn user_basic() {
             email: None,
             phone: None,
             password: Vec::new(),
+            plaintext_password: None,
         }),
     ];
 
