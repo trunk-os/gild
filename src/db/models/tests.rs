@@ -49,7 +49,7 @@ async fn user_basic() {
             email: Some("erikhollensbe@proton.me".into()),
             phone: Some("800-867-5309".into()),
             password: Vec::new(),
-            plaintext_password: None,
+            plaintext_password: Some("horlclax".into()),
         }),
         DbState::new_uncreated(User {
             id: 0,
@@ -58,7 +58,7 @@ async fn user_basic() {
             email: Some("scarlett@hollensbe.org".into()),
             phone: None,
             password: Vec::new(),
-            plaintext_password: None,
+            plaintext_password: Some("foobar".into()),
         }),
         DbState::new_uncreated(User {
             id: 0,
@@ -67,7 +67,7 @@ async fn user_basic() {
             email: Some("christopher@maujean.org".into()),
             phone: None,
             password: Vec::new(),
-            plaintext_password: None,
+            plaintext_password: Some("pooprocket".into()),
         }),
         DbState::new_uncreated(User {
             id: 0,
@@ -76,7 +76,7 @@ async fn user_basic() {
             email: None,
             phone: None,
             password: Vec::new(),
-            plaintext_password: None,
+            plaintext_password: Some("mmph".into()),
         }),
         DbState::new_uncreated(User {
             id: 0,
@@ -85,12 +85,18 @@ async fn user_basic() {
             email: None,
             phone: None,
             password: Vec::new(),
-            plaintext_password: None,
+            plaintext_password: Some("meh".into()),
         }),
     ];
 
     for item in table.into_iter() {
-        assert!(item.set_password("horlclax".into()).is_ok());
+        let pw = item.plaintext_password.clone().unwrap();
+        item.set_password(pw).unwrap();
+        assert_ne!(item.password.len(), 0);
+        assert_ne!(
+            item.password,
+            item.plaintext_password.clone().unwrap().as_bytes().to_vec()
+        );
         assert!(item.save(&db.handle).await.is_ok());
         assert_ne!(item.id, 0);
     }

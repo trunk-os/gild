@@ -67,6 +67,12 @@ pub(crate) async fn create_user(
     Cbor(user): Cbor<User>,
 ) -> Result<CborOut<User>> {
     let mut user = DbState::new_uncreated(user);
+
+    // crypt the plaintext password if it is set and erase it
+    if let Some(password) = user.plaintext_password.clone() {
+        user.set_password(password)?;
+    }
+
     user.save(state.db.handle()).await?;
     Ok(CborOut(user.into_inner()))
 }
