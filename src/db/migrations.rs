@@ -25,7 +25,7 @@ fn create_users_table(_: &TableState) -> Result<MigrationStep> {
     let m = create_table("users")
         .id(|c| c("id", Type::Uuid))
         .column(|c| c("username", Type::String))
-        .column(|c| c("password", Type::String))
+        .column(|c| c("password", Type::Binary))
         .column(|c| c("realname", Type::String).is_null())
         .column(|c| c("email", Type::String).is_null())
         .column(|c| c("phone", Type::String).is_null());
@@ -35,7 +35,7 @@ fn create_users_table(_: &TableState) -> Result<MigrationStep> {
 fn create_sessions_table(_: &TableState) -> Result<MigrationStep> {
     let m = create_table("sessions")
         .id(|c| c("id", Type::Uuid))
-        .column(|c| c("secret", Type::String))
+        .column(|c| c("secret", Type::Binary))
         .column(|c| c("expires", Type::Datetime));
     Ok(MigrationStep::new("create sessions table", m))
 }
