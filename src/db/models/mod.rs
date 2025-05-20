@@ -19,11 +19,12 @@ pub(crate) struct User {
     pub realname: Option<String>,
     pub email: Option<String>,
     pub phone: Option<String>,
-    #[serde(skip)]
-    password: Vec<u8>,
     #[welds(ignore)]
     #[serde(rename = "password")]
-    plaintext_password: Option<String>,
+    #[serde(skip_serializing)]
+    pub plaintext_password: Option<String>,
+    #[serde(skip)]
+    password: Vec<u8>,
 }
 
 impl User {

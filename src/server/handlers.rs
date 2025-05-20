@@ -110,7 +110,14 @@ pub(crate) async fn update_user(
     if let Some(fetched) = User::find_by_id(state.db.handle(), id).await? {
         // replace the id, but everything else is editable.
         let inner = fetched.into_inner();
+
         user.id = inner.id;
+
+        // crypt the plaintext password if it is set and erase it
+        if let Some(password) = &user.plaintext_password {
+            user.set_password(password.clone())?;
+        }
+
         let mut user: DbState<User> = DbState::db_loaded(user);
         Ok(user.save(state.db.handle()).await?)
     } else {
