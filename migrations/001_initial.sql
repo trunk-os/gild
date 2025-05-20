@@ -1,5 +1,5 @@
 create table users (
-  id varchar primary key not null,
+  user_id integer primary key autoincrement,
   username varchar not null,
   realname varchar,
   email varchar,
@@ -8,7 +8,7 @@ create table users (
 );
 
 create table sessions (
-  id varchar primary key not null,
+  session_id integer primary key autoincrement,
   secret blob not null,
   expires datetime not null,
   user_id varchar not null

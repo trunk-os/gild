@@ -11,7 +11,7 @@ use welds::WeldsModel;
 pub(crate) struct User {
     #[welds(rename = "user_id")]
     #[welds(primary_key)]
-    id: uuid::Uuid,
+    id: u32,
     username: String,
     realname: Option<String>,
     email: Option<String>,
@@ -48,11 +48,29 @@ impl User {
 pub(crate) struct Session {
     #[welds(rename = "session_id")]
     #[welds(primary_key)]
-    id: uuid::Uuid,
+    id: u32,
     secret: Vec<u8>,
     expires: chrono::DateTime<chrono::Local>,
-    user_id: uuid::Uuid,
+    user_id: u32,
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::User;
+    use crate::testutil::*;
+
+    #[tokio::test]
+    async fn user_model_basic() {
+        let db = make_config(None, None)
+            .await
+            .unwrap()
+            .get_db()
+            .await
+            .unwrap();
+
+        let mut user = User::new();
+        user.username = "erikh".into();
+        user.set_password("horlclax".into()).unwrap();
+        user.save(&db.handle).await.unwrap();
+    }
+}
