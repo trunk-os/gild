@@ -87,6 +87,25 @@ impl TestClient {
         }
     }
 
+    pub async fn delete<T>(&self, path: &str) -> Result<T>
+    where
+        T: for<'de> Deserialize<'de> + DeserializeOwned + Default,
+    {
+        let byt: Vec<u8> = self
+            .client
+            .delete(&format!("{}{}", self.baseurl, path))
+            .send()
+            .await?
+            .bytes()
+            .await?
+            .to_vec();
+        if byt.len() > 0 {
+            Ok(ciborium::from_reader(std::io::Cursor::new(byt))?)
+        } else {
+            Ok(T::default())
+        }
+    }
+
     pub async fn post<I, O>(&self, path: &str, input: I) -> Result<O>
     where
         I: Serialize,
@@ -99,6 +118,32 @@ impl TestClient {
         let byt: Vec<u8> = self
             .client
             .post(&format!("{}{}", self.baseurl, path))
+            .header("Content-type", "application/cbor")
+            .body(body.into_inner().to_vec())
+            .send()
+            .await?
+            .bytes()
+            .await?
+            .to_vec();
+        if byt.len() > 0 {
+            Ok(ciborium::from_reader(std::io::Cursor::new(byt))?)
+        } else {
+            Ok(O::default())
+        }
+    }
+
+    pub async fn put<I, O>(&self, path: &str, input: I) -> Result<O>
+    where
+        I: Serialize,
+        O: for<'de> Deserialize<'de> + DeserializeOwned + Default,
+    {
+        let mut inner = Vec::with_capacity(65535);
+        let mut body = std::io::Cursor::new(&mut inner);
+        ciborium::into_writer(&input, &mut body)?;
+
+        let byt: Vec<u8> = self
+            .client
+            .put(&format!("{}{}", self.baseurl, path))
             .header("Content-type", "application/cbor")
             .body(body.into_inner().to_vec())
             .send()

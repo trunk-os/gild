@@ -94,8 +94,8 @@ async fn user_basic() {
         item.set_password(pw).unwrap();
         assert_ne!(item.password.len(), 0);
         assert_ne!(
-            item.password,
-            item.plaintext_password.clone().unwrap().as_bytes().to_vec()
+            &item.password,
+            item.plaintext_password.clone().unwrap().as_bytes(),
         );
         assert!(item.save(&db.handle).await.is_ok());
         assert_ne!(item.id, 0);

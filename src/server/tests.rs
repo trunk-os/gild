@@ -1,19 +1,31 @@
-use crate::testutil::{start_server, TestClient};
+mod service {
+    use crate::testutil::{start_server, TestClient};
 
-#[tokio::test]
-async fn test_ping() {
-    let client = TestClient::new(start_server(None).await.unwrap());
-    assert!(client.get::<()>("/status/ping").await.is_ok());
+    #[tokio::test]
+    async fn ping() {
+        let client = TestClient::new(start_server(None).await.unwrap());
+        assert!(client.get::<()>("/status/ping").await.is_ok());
+    }
+}
+
+mod user {
+    #[allow(unused)]
+    use crate::testutil::{start_server, TestClient};
+
+    #[tokio::test]
+    async fn users_crud() {
+        let client = TestClient::new(start_server(None).await.unwrap());
+        assert!(client.get::<()>("/status/ping").await.is_ok());
+    }
 }
 
 #[cfg(feature = "zfs")]
 mod zfs {
+    use crate::testutil::{start_server, TestClient};
     use buckle::client::ZFSStat;
 
-    use crate::testutil::{start_server, TestClient};
-
     #[tokio::test]
-    async fn test_zfs() {
+    async fn zfs_basic() {
         let _ = buckle::testutil::destroy_zpool("gild", None);
         let zpool = buckle::testutil::create_zpool("gild").unwrap();
         let client = TestClient::new(start_server(Some("buckle-test-gild".into())).await.unwrap());
