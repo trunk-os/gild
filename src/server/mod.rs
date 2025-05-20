@@ -32,6 +32,8 @@ pub struct Server {
 
 impl Server {
     pub async fn new(config: Config) -> Result<Self> {
+        let db = DB::new(&config).await?;
+        db.migrate().await?;
         Ok(Self {
             router: Router::new()
                 .route("/status/ping", get(ping))
@@ -46,7 +48,7 @@ impl Server {
                 )
                 .with_state(Arc::new(ServerState {
                     client: Client::new(config.socket.clone())?,
-                    db: DB::new(&config).await?,
+                    db,
                 }))
                 .layer(
                     ServiceBuilder::new().layer(
