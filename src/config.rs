@@ -40,4 +40,12 @@ impl Config {
         let file = std::fs::OpenOptions::new().read(true).open(file)?;
         Ok(serde_yaml_ng::from_reader(file)?)
     }
+
+    pub(crate) async fn get_db(&self) -> Result<crate::db::DB> {
+        Ok(crate::db::DB::new(self.clone()).await?)
+    }
+
+    pub(crate) fn get_client(&self) -> Result<buckle::client::Client> {
+        buckle::client::Client::new(self.socket.clone())
+    }
 }

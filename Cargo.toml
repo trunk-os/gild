@@ -16,7 +16,7 @@ ciborium = "*"
 tower = "*"
 tower-http = { version = "*", features = [ "cors" ] }
 sqlx = { version = "*", features = [ "runtime-tokio", "sqlite", "uuid", "derive", "macros", "chrono" ] }
-welds = { version = "*", features = [ "sqlite", "mock", "tracing", "check", "detect", "migrations", "unstable-api" ] }
+welds = { version = "*", features = [ "sqlite", "check", "detect", "migrations", "unstable-api", "tracing" ] }
 argon2 = "*"
 uuid = "*"
 chrono = "*"

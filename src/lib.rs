@@ -1,5 +1,5 @@
 pub mod config;
-pub(crate) mod db;
+pub mod db;
 pub mod server;
 
 #[cfg(test)]

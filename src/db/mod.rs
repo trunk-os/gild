@@ -7,37 +7,44 @@ use sqlx::{migrate::MigrateDatabase, Sqlite};
 use welds::connections::sqlite::{connect, SqliteClient};
 
 #[derive(Clone)]
-pub(crate) struct DB(SqliteClient);
+pub struct DB {
+    handle: SqliteClient,
+    filename: std::path::PathBuf,
+}
 
 impl std::fmt::Debug for DB {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let options = self.0.as_sqlx_pool().connect_options();
-        let filename = options.get_filename();
         f.write_str(&format!(
             "db client, connected to {}",
-            filename.to_str().unwrap()
+            self.filename.to_str().unwrap()
         ))
     }
 }
 
+pub async fn migrate(filename: std::path::PathBuf) -> Result<()> {
+    Ok(migrations::migrate(filename).await?)
+}
+
 impl DB {
-    pub(crate) async fn new(config: &Config) -> Result<Self> {
-        match connect(&format!("sqlite:{}", config.db.to_str().unwrap())).await {
-            Ok(c) => Ok(Self(c)),
+    pub async fn new(config: Config) -> Result<Self> {
+        let this = match connect(&format!("sqlite:{}", config.db.to_str().unwrap())).await {
+            Ok(c) => Self {
+                handle: c,
+                filename: config.db.clone(),
+            },
             Err(_) => {
-                Self::create(config).await?;
-                Ok(Self(
-                    connect(&format!("sqlite:{}", config.db.to_str().unwrap())).await?,
-                ))
+                Self::create(config.clone()).await?;
+                Self {
+                    handle: connect(&format!("sqlite:{}", config.db.to_str().unwrap())).await?,
+                    filename: config.db.clone(),
+                }
             }
-        }
+        };
+        migrate(this.filename.clone()).await?;
+        Ok(this)
     }
 
-    pub(crate) async fn migrate(&self) -> Result<()> {
-        Ok(migrations::migrate(self).await?)
-    }
-
-    pub async fn create(config: &Config) -> anyhow::Result<()> {
+    async fn create<'a>(config: Config) -> anyhow::Result<()> {
         sqlx::sqlite::CREATE_DB_WAL.store(true, std::sync::atomic::Ordering::Release);
 
         Sqlite::create_database(&format!("sqlite:{}", config.db.to_str().unwrap())).await?;
