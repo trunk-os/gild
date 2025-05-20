@@ -5,9 +5,10 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
+use serde::{Deserialize, Serialize};
 use welds::WeldsModel;
 
-#[derive(Debug, WeldsModel)]
+#[derive(Debug, WeldsModel, Serialize, Deserialize)]
 #[welds(table = "users")]
 #[welds(HasMany(sessions, Session, "user_id"))]
 pub(crate) struct User {
@@ -18,6 +19,7 @@ pub(crate) struct User {
     pub realname: Option<String>,
     pub email: Option<String>,
     pub phone: Option<String>,
+    #[serde(skip)]
     password: Vec<u8>,
 }
 
@@ -44,7 +46,7 @@ impl User {
     }
 }
 
-#[derive(Debug, WeldsModel)]
+#[derive(Debug, WeldsModel, Serialize, Deserialize)]
 #[welds(table = "sessions")]
 #[welds(BelongsTo(user, User, "user_id"))]
 pub(crate) struct Session {
@@ -53,5 +55,6 @@ pub(crate) struct Session {
     pub id: u32,
     pub expires: chrono::DateTime<chrono::Local>,
     pub user_id: u32,
+    #[serde(skip)]
     secret: Vec<u8>,
 }

@@ -19,7 +19,7 @@ sqlx = { version = "*", features = [ "runtime-tokio", "sqlite", "uuid", "derive"
 welds = { version = "*", features = [ "sqlite", "check", "detect", "migrations", "unstable-api", "tracing" ] }
 argon2 = "*"
 uuid = "*"
-chrono = "*"
+chrono = { version = "*", features = [ "serde" ] }
 rand_core = { version = "*", features = [ "getrandom" ] }
 rand = "*"
 
