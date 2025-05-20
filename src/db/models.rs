@@ -6,6 +6,7 @@ use argon2::{
 use welds::WeldsModel;
 
 #[derive(Debug, WeldsModel)]
+#[welds(table = "users")]
 #[welds(HasMany(sessions, Session, "user_id"))]
 pub(crate) struct User {
     #[welds(rename = "user_id")]
@@ -42,6 +43,7 @@ impl User {
 }
 
 #[derive(Debug, WeldsModel)]
+#[welds(table = "sessions")]
 #[welds(BelongsTo(user, User, "user_id"))]
 pub(crate) struct Session {
     #[welds(rename = "session_id")]
@@ -51,3 +53,6 @@ pub(crate) struct Session {
     expires: chrono::DateTime<chrono::Local>,
     user_id: uuid::Uuid,
 }
+
+#[cfg(test)]
+mod tests {}
