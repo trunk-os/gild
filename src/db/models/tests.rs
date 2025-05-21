@@ -15,10 +15,7 @@ async fn user_password() {
     let mut user = User::new();
     user.username = "erikh".into();
     assert!(user.set_password("horlclax".into()).is_ok());
-    assert_ne!(
-        String::from_utf8(user.password.clone()).unwrap(),
-        "horlclax".to_string()
-    );
+    assert_ne!(user.password, "horlclax".to_string());
     assert!(user.save(&db.handle).await.is_ok());
 
     let user2 = User::find_by_id(&db.handle, user.id).await.unwrap();
@@ -48,7 +45,7 @@ async fn user_basic() {
             realname: Some("Erik Hollensbe".into()),
             email: Some("erikhollensbe@proton.me".into()),
             phone: Some("800-867-5309".into()),
-            password: Vec::new(),
+            password: "".into(),
             plaintext_password: Some("horlclax".into()),
         }),
         DbState::new_uncreated(User {
@@ -57,7 +54,7 @@ async fn user_basic() {
             realname: Some("Scarlett Hollensbe".into()),
             email: Some("scarlett@hollensbe.org".into()),
             phone: None,
-            password: Vec::new(),
+            password: "".into(),
             plaintext_password: Some("foobar".into()),
         }),
         DbState::new_uncreated(User {
@@ -66,7 +63,7 @@ async fn user_basic() {
             realname: Some("Christopher Maujean".into()),
             email: Some("christopher@maujean.org".into()),
             phone: None,
-            password: Vec::new(),
+            password: "".into(),
             plaintext_password: Some("pooprocket".into()),
         }),
         DbState::new_uncreated(User {
@@ -75,7 +72,7 @@ async fn user_basic() {
             realname: Some("Day Waterbury".into()),
             email: None,
             phone: None,
-            password: Vec::new(),
+            password: "".into(),
             plaintext_password: Some("mmph".into()),
         }),
         DbState::new_uncreated(User {
@@ -84,7 +81,7 @@ async fn user_basic() {
             realname: Some("Julian Sutter".into()),
             email: None,
             phone: None,
-            password: Vec::new(),
+            password: "".into(),
             plaintext_password: Some("meh".into()),
         }),
     ];
@@ -93,10 +90,7 @@ async fn user_basic() {
         let pw = item.plaintext_password.clone().unwrap();
         item.set_password(pw).unwrap();
         assert_ne!(item.password.len(), 0);
-        assert_ne!(
-            &item.password,
-            item.plaintext_password.clone().unwrap().as_bytes(),
-        );
+        assert_ne!(item.password, item.plaintext_password.clone().unwrap(),);
         assert!(item.save(&db.handle).await.is_ok());
         assert_ne!(item.id, 0);
     }

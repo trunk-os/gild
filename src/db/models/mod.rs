@@ -8,7 +8,9 @@ use argon2::{
 use serde::{Deserialize, Serialize};
 use welds::WeldsModel;
 
-#[derive(Debug, WeldsModel, Default, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Eq, PartialEq, Ord, PartialOrd, WeldsModel, Default, Serialize, Deserialize,
+)]
 #[welds(table = "users")]
 #[welds(HasMany(sessions, Session, "user_id"))]
 pub(crate) struct User {
@@ -21,17 +23,15 @@ pub(crate) struct User {
     pub phone: Option<String>,
     #[welds(ignore)]
     #[serde(rename = "password")]
-    #[serde(skip_serializing)]
     pub plaintext_password: Option<String>,
     #[serde(skip)]
-    password: Vec<u8>,
+    pub(crate) password: String,
 }
 
 impl User {
     pub(crate) fn login(&mut self, password: String) -> Result<()> {
         let crypt = Argon2::default();
-        let s = String::from_utf8(self.password.clone())?;
-        let parsed = PasswordHash::new(s.as_str()).map_err(|e| anyhow!(e.to_string()))?;
+        let parsed = PasswordHash::new(&self.password).map_err(|e| anyhow!(e.to_string()))?;
         Ok(crypt
             .verify_password(password.as_bytes(), &parsed)
             .map_err(|e| anyhow!(e.to_string()))?)
@@ -43,19 +43,20 @@ impl User {
         self.password = crypt
             .hash_password(password.as_bytes(), &salt)
             .map_err(|e| anyhow!(e.to_string()))?
-            .to_string()
-            .as_bytes()
-            .to_vec();
+            .to_string();
         Ok(())
     }
 }
 
-#[derive(Debug, WeldsModel, Default, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Eq, PartialEq, Ord, PartialOrd, WeldsModel, Default, Serialize, Deserialize,
+)]
 #[welds(table = "sessions")]
 #[welds(BelongsTo(user, User, "user_id"))]
 pub(crate) struct Session {
     #[welds(rename = "session_id")]
     #[welds(primary_key)]
+    #[serde(skip)]
     pub id: u32,
     pub expires: chrono::DateTime<chrono::Local>,
     pub user_id: u32,

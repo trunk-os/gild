@@ -71,6 +71,9 @@ pub(crate) async fn create_user(
     // crypt the plaintext password if it is set and erase it
     if let Some(password) = user.plaintext_password.clone() {
         user.set_password(password)?;
+        user.plaintext_password = None;
+    } else {
+        return Err(anyhow!("password is required").into());
     }
 
     user.save(state.db.handle()).await?;
@@ -113,11 +116,9 @@ pub(crate) async fn update_user(
     Path(id): Path<u32>,
     Cbor(mut user): Cbor<User>,
 ) -> Result<()> {
-    if let Some(fetched) = User::find_by_id(state.db.handle(), id).await? {
-        // replace the id, but everything else is editable.
-        let inner = fetched.into_inner();
-
-        user.id = inner.id;
+    if let Some(_) = User::find_by_id(state.db.handle(), id).await? {
+        // if we got the record, the id is correct
+        user.id = id;
 
         // crypt the plaintext password if it is set and erase it
         if let Some(password) = &user.plaintext_password {

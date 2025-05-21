@@ -34,9 +34,12 @@ where
     T: serde::Serialize,
 {
     fn into_response(self) -> Response {
-        let mut inner = Vec::with_capacity(65536);
+        let mut inner = Vec::with_capacity(65535);
         let mut buf = std::io::Cursor::new(&mut inner);
-        ciborium::into_writer(&self.0, &mut buf).unwrap();
+        match ciborium::into_writer(&self.0, &mut buf) {
+            Err(e) => return AppError(e.into()).into_response(),
+            _ => {}
+        }
 
         Response::builder()
             .body(axum::body::Body::from(buf.into_inner().to_vec()))

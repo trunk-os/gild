@@ -4,7 +4,7 @@ create table users (
   realname varchar,
   email varchar,
   phone varchar,
-  password blob not null
+  password varchar not null
 );
 
 create table sessions (

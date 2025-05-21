@@ -9,13 +9,77 @@ mod service {
 }
 
 mod user {
-    #[allow(unused)]
+    use crate::db::models::User;
     use crate::testutil::{start_server, TestClient};
 
     #[tokio::test]
     async fn users_crud() {
         let client = TestClient::new(start_server(None).await.unwrap());
-        assert!(client.get::<()>("/status/ping").await.is_ok());
+        let list = client.get::<Vec<User>>("/users").await.unwrap();
+        assert_eq!(list.len(), 0);
+
+        let table: &mut [User] = &mut [
+            User {
+                username: "erikh".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("erikhollensbe@proton.me".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+            User {
+                username: "scarlett".into(),
+                realname: Some("Scarlett Hollensbe".into()),
+                email: Some("scarlett@hollensbe.org".into()),
+                phone: None,
+                plaintext_password: Some("foobar".into()),
+                ..Default::default()
+            },
+            User {
+                username: "cmaujean".into(),
+                realname: Some("Christopher Maujean".into()),
+                email: Some("christopher@maujean.org".into()),
+                plaintext_password: Some("pooprocket".into()),
+                ..Default::default()
+            },
+            User {
+                username: "day".into(),
+                realname: Some("Day Waterbury".into()),
+                plaintext_password: Some("mmph".into()),
+                ..Default::default()
+            },
+            User {
+                username: "dpnvektor".into(),
+                realname: Some("Julian Sutter".into()),
+                plaintext_password: Some("meh".into()),
+                ..Default::default()
+            },
+        ];
+
+        let mut created = Vec::new();
+
+        for item in table.into_iter() {
+            item.set_password(item.plaintext_password.clone().unwrap())
+                .unwrap();
+            let user = client
+                .put::<User, User>("/users", item.clone())
+                .await
+                .unwrap();
+            created.push(user);
+        }
+
+        let list = client.get::<Vec<User>>("/users").await.unwrap();
+        assert_eq!(list.len(), table.len());
+
+        for item in created.into_iter() {
+            assert_eq!(
+                client
+                    .get::<User>(&format!("/user/{}", item.id))
+                    .await
+                    .unwrap(),
+                item.clone(),
+            );
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::{config::Config, server::Server};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use buckle::{config::ZFSConfig, testutil::make_server};
 use reqwest::Client;
 use serde::{
@@ -72,14 +72,20 @@ impl TestClient {
     where
         T: for<'de> Deserialize<'de> + DeserializeOwned + Default,
     {
-        let byt: Vec<u8> = self
+        let resp = self
             .client
             .get(&format!("{}{}", self.baseurl, path))
             .send()
-            .await?
-            .bytes()
-            .await?
-            .to_vec();
+            .await?;
+        if resp.status() != 200 {
+            return Err(anyhow!(
+                "{}",
+                String::from_utf8(resp.bytes().await?.to_vec())?
+            ));
+        }
+
+        let byt = resp.bytes().await?;
+
         if byt.len() > 0 {
             Ok(ciborium::from_reader(std::io::Cursor::new(byt))?)
         } else {
@@ -91,14 +97,20 @@ impl TestClient {
     where
         T: for<'de> Deserialize<'de> + DeserializeOwned + Default,
     {
-        let byt: Vec<u8> = self
+        let resp = self
             .client
             .delete(&format!("{}{}", self.baseurl, path))
             .send()
-            .await?
-            .bytes()
-            .await?
-            .to_vec();
+            .await?;
+        if resp.status() != 200 {
+            return Err(anyhow!(
+                "{}",
+                String::from_utf8(resp.bytes().await?.to_vec())?
+            ));
+        }
+
+        let byt = resp.bytes().await?;
+
         if byt.len() > 0 {
             Ok(ciborium::from_reader(std::io::Cursor::new(byt))?)
         } else {
@@ -112,19 +124,26 @@ impl TestClient {
         O: for<'de> Deserialize<'de> + DeserializeOwned + Default,
     {
         let mut inner = Vec::with_capacity(65535);
-        let mut body = std::io::Cursor::new(&mut inner);
-        ciborium::into_writer(&input, &mut body)?;
+        let mut buf = std::io::Cursor::new(&mut inner);
+        ciborium::into_writer(&input, &mut buf)?;
 
-        let byt: Vec<u8> = self
+        let resp = self
             .client
             .post(&format!("{}{}", self.baseurl, path))
             .header("Content-type", "application/cbor")
-            .body(body.into_inner().to_vec())
+            .body(buf.into_inner().to_vec())
             .send()
-            .await?
-            .bytes()
-            .await?
-            .to_vec();
+            .await?;
+
+        if resp.status() != 200 {
+            return Err(anyhow!(
+                "{}",
+                String::from_utf8(resp.bytes().await?.to_vec())?
+            ));
+        }
+
+        let byt = resp.bytes().await?;
+
         if byt.len() > 0 {
             Ok(ciborium::from_reader(std::io::Cursor::new(byt))?)
         } else {
@@ -138,19 +157,26 @@ impl TestClient {
         O: for<'de> Deserialize<'de> + DeserializeOwned + Default,
     {
         let mut inner = Vec::with_capacity(65535);
-        let mut body = std::io::Cursor::new(&mut inner);
-        ciborium::into_writer(&input, &mut body)?;
+        let mut buf = std::io::Cursor::new(&mut inner);
+        ciborium::into_writer(&input, &mut buf)?;
 
-        let byt: Vec<u8> = self
+        let resp = self
             .client
             .put(&format!("{}{}", self.baseurl, path))
             .header("Content-type", "application/cbor")
-            .body(body.into_inner().to_vec())
+            .body(buf.into_inner().to_vec())
             .send()
-            .await?
-            .bytes()
-            .await?
-            .to_vec();
+            .await?;
+
+        if resp.status() != 200 {
+            return Err(anyhow!(
+                "{}",
+                String::from_utf8(resp.bytes().await?.to_vec())?
+            ));
+        }
+
+        let byt = resp.bytes().await?;
+
         if byt.len() > 0 {
             Ok(ciborium::from_reader(std::io::Cursor::new(byt))?)
         } else {

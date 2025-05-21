@@ -51,7 +51,16 @@ impl Server {
                 .layer(
                     ServiceBuilder::new().layer(
                         CorsLayer::new()
-                            .allow_methods([Method::GET, Method::POST, Method::DELETE, Method::PUT])
+                            .allow_methods([
+                                Method::GET,
+                                Method::POST,
+                                Method::DELETE,
+                                Method::PUT,
+                                Method::PATCH,
+                                Method::HEAD,
+                                Method::TRACE,
+                                Method::OPTIONS,
+                            ])
                             .allow_origin(Any)
                             .allow_headers([CONTENT_TYPE, ACCEPT])
                             .allow_private_network(true),
