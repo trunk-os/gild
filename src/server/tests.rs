@@ -71,7 +71,7 @@ mod user {
         let list = client.get::<Vec<User>>("/users").await.unwrap();
         assert_eq!(list.len(), table.len());
 
-        for item in created.into_iter() {
+        for item in created.iter() {
             assert_eq!(
                 client
                     .get::<User>(&format!("/user/{}", item.id))
@@ -80,6 +80,32 @@ mod user {
                 item.clone(),
             );
         }
+
+        // update and fetch and compare
+        for mut item in created.clone().into_iter() {
+            item.realname = Some("new realname".into());
+            client
+                .post::<User, ()>(&format!("/user/{}", item.id), item.clone())
+                .await
+                .unwrap();
+            assert_eq!(
+                client
+                    .get::<User>(&format!("/user/{}", item.id))
+                    .await
+                    .unwrap(),
+                item.clone(),
+            );
+        }
+
+        for item in created.into_iter() {
+            client
+                .delete::<()>(&format!("/user/{}", item.id))
+                .await
+                .unwrap();
+        }
+
+        let list = client.get::<Vec<User>>("/users").await.unwrap();
+        assert_eq!(list.len(), 0);
     }
 }
 

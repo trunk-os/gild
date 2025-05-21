@@ -125,8 +125,11 @@ pub(crate) async fn update_user(
             user.set_password(password.clone())?;
         }
 
-        let mut user: DbState<User> = DbState::db_loaded(user);
-        Ok(user.save(state.db.handle()).await?)
+        // welds doesn't realize the fields have already changed, these two lines force it to see
+        // it.
+        let mut dbstate: DbState<User> = DbState::db_loaded(user.clone());
+        dbstate.replace_inner(user);
+        Ok(dbstate.save(state.db.handle()).await?)
     } else {
         Err(anyhow!("invalid user").into())
     }
