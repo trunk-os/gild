@@ -2,13 +2,13 @@
 use crate::db::models::{Session, User};
 use hmac::{Hmac, Mac};
 use jwt::SignWithKey;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-use super::{axum_support::*, ServerState};
+use super::{axum_support::*, Authentication, ServerState};
 use anyhow::anyhow;
 use axum::{
-    body::Body,
-    extract::{Path, State},
+    body::{Body, HttpBody},
+    extract::{Path, Request, State},
     response::Response,
     Form,
 };
@@ -24,7 +24,7 @@ use welds::{exts::VecStateExt, state::DbState};
 
 pub(crate) async fn ping(
     State(state): State<Arc<ServerState>>,
-    Account(user): Account<Option<User>>,
+    Account(_): Account<Option<User>>,
 ) -> Result<()> {
     state.client.status().await?.ping().await?;
     Ok(())
@@ -34,8 +34,10 @@ pub(crate) async fn ping(
 // zfs handlers
 //
 //
+#[axum::debug_handler]
 pub(crate) async fn zfs_list(
     State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
     Cbor(filter): Cbor<String>,
 ) -> Result<CborOut<Vec<ZFSStat>>> {
     let filter = if filter.is_empty() {
@@ -49,6 +51,7 @@ pub(crate) async fn zfs_list(
 
 pub(crate) async fn zfs_create_dataset(
     State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
     Cbor(dataset): Cbor<buckle::client::Dataset>,
 ) -> Result<()> {
     state.client.zfs().await?.create_dataset(dataset).await?;
@@ -57,6 +60,7 @@ pub(crate) async fn zfs_create_dataset(
 
 pub(crate) async fn zfs_create_volume(
     State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
     Cbor(volume): Cbor<buckle::client::Volume>,
 ) -> Result<()> {
     state.client.zfs().await?.create_volume(volume).await?;
@@ -65,6 +69,7 @@ pub(crate) async fn zfs_create_volume(
 
 pub(crate) async fn zfs_destroy(
     State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
     Cbor(name): Cbor<String>,
 ) -> Result<()> {
     state.client.zfs().await?.destroy(name).await?;
@@ -77,8 +82,16 @@ pub(crate) async fn zfs_destroy(
 
 pub(crate) async fn create_user(
     State(state): State<Arc<ServerState>>,
+    Account(login): Account<Option<User>>,
     Cbor(user): Cbor<User>,
 ) -> Result<CborOut<User>> {
+    if login.is_none() {
+        let count = User::all().count(state.db.handle()).await?;
+        if count != 0 {
+            return Err(anyhow!("invalid login").into());
+        }
+    }
+
     let mut user = DbState::new_uncreated(user);
 
     user.validate()?;
@@ -98,6 +111,7 @@ pub(crate) async fn create_user(
 
 pub(crate) async fn remove_user(
     State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
     Path(id): Path<u32>,
 ) -> Result<()> {
     if let Some(mut user) = User::find_by_id(state.db.handle(), id).await? {
@@ -109,6 +123,7 @@ pub(crate) async fn remove_user(
 
 pub(crate) async fn list_users(
     State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
 ) -> Result<CborOut<Vec<User>>> {
     Ok(CborOut(
         User::all().run(state.db.handle()).await?.into_inners(),
@@ -117,6 +132,7 @@ pub(crate) async fn list_users(
 
 pub(crate) async fn get_user(
     State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
     Path(id): Path<u32>,
 ) -> Result<CborOut<User>> {
     Ok(CborOut(
@@ -130,6 +146,7 @@ pub(crate) async fn get_user(
 pub(crate) async fn update_user(
     State(state): State<Arc<ServerState>>,
     Path(id): Path<u32>,
+    Account(_): Account<User>,
     Cbor(mut user): Cbor<User>,
 ) -> Result<()> {
     if let Some(_) = User::find_by_id(state.db.handle(), id).await? {
@@ -156,14 +173,7 @@ pub(crate) async fn update_user(
 // Authentication
 //
 
-#[derive(Debug, Clone, Default, Validate, Deserialize)]
-pub(crate) struct Authentication {
-    #[validate(length(min = 3, max = 30))]
-    username: String,
-    #[validate(length(min = 8, max = 100))]
-    password: String,
-}
-
+#[axum::debug_handler]
 pub(crate) async fn login(
     State(state): State<Arc<ServerState>>,
     Form(form): Form<Authentication>,
@@ -200,11 +210,14 @@ pub(crate) async fn login(
         .status(200)
         .header(
             "Set-Cookie",
-            &format!(
-                "jwt={}; Expires={}; HttpOnly; SameSite=None; Secure",
-                jwt.as_str(),
-                session.expires.to_rfc2822()
-            ),
+            &format!("jwt={}; Path=/; HttpOnly; Secure", jwt.as_str(),),
         )
         .body(Body::empty())?)
+}
+
+pub(crate) async fn logout(
+    State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
+) -> Result<()> {
+    Ok(())
 }

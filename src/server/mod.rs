@@ -13,15 +13,25 @@ use axum::{
 };
 use buckle::client::Client;
 use http::{header::*, Method};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
+use validator::Validate;
 
 #[derive(Debug, Clone)]
 pub struct ServerState {
     client: Client,
     db: DB,
     config: Config,
+}
+
+#[derive(Debug, Clone, Default, Validate, Serialize, Deserialize)]
+pub struct Authentication {
+    #[validate(length(min = 3, max = 30))]
+    pub username: String,
+    #[validate(length(min = 8, max = 100))]
+    pub password: String,
 }
 
 #[derive(Debug, Clone)]
@@ -44,7 +54,8 @@ impl Server {
                     "/user/{id}",
                     delete(remove_user).get(get_user).post(update_user),
                 )
-                .route("/login", post(login))
+                .route("/session/login", post(login))
+                .route("/session/logout", post(logout))
                 .with_state(Arc::new(ServerState {
                     client: config.get_client()?,
                     db: config.get_db().await?,

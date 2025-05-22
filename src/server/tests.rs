@@ -10,13 +10,64 @@ mod service {
 
 mod user {
     use crate::db::models::User;
+    use crate::server::Authentication;
     use crate::testutil::{start_server, TestClient};
+
+    #[tokio::test]
+    async fn first_time_setup() {
+        let client = TestClient::new(start_server(None).await.unwrap());
+
+        let login = User {
+            username: "test-login".into(),
+            plaintext_password: Some("test-password".into()),
+            ..Default::default()
+        };
+        assert!(client.put::<User, User>("/users", login).await.is_ok());
+
+        let login = User {
+            username: "test-login2".into(),
+            plaintext_password: Some("test-password".into()),
+            ..Default::default()
+        };
+        assert!(client.put::<User, User>("/users", login).await.is_err());
+
+        client
+            .login(Authentication {
+                username: "test-login".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap();
+
+        let login = User {
+            username: "test-login2".into(),
+            plaintext_password: Some("test-password".into()),
+            ..Default::default()
+        };
+        assert!(client.put::<User, User>("/users", login).await.is_ok());
+    }
 
     #[tokio::test]
     async fn users_validate() {
         let client = TestClient::new(start_server(None).await.unwrap());
+
+        let login = User {
+            username: "test-login".into(),
+            plaintext_password: Some("test-password".into()),
+            ..Default::default()
+        };
+        assert!(client.put::<User, User>("/users", login).await.is_ok());
+
+        client
+            .login(Authentication {
+                username: "test-login".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap();
+
         let list = client.get::<Vec<User>>("/users").await.unwrap();
-        assert_eq!(list.len(), 0);
+        assert_eq!(list.len(), 1);
 
         let table: &[User] = &[
             User {
@@ -164,8 +215,24 @@ mod user {
     #[tokio::test]
     async fn users_crud() {
         let client = TestClient::new(start_server(None).await.unwrap());
+
+        let login = User {
+            username: "test-login".into(),
+            plaintext_password: Some("test-password".into()),
+            ..Default::default()
+        };
+        assert!(client.put::<User, User>("/users", login).await.is_ok());
+
+        client
+            .login(Authentication {
+                username: "test-login".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap();
+
         let list = client.get::<Vec<User>>("/users").await.unwrap();
-        assert_eq!(list.len(), 0);
+        assert_eq!(list.len(), 1);
 
         let table: &[User] = &[
             User {
@@ -223,7 +290,7 @@ mod user {
         }
 
         let list = client.get::<Vec<User>>("/users").await.unwrap();
-        assert_eq!(list.len(), table.len());
+        assert_eq!(list.len(), table.len() + 1); // add the logged in user
 
         for item in created.iter() {
             assert_eq!(
@@ -259,13 +326,17 @@ mod user {
         }
 
         let list = client.get::<Vec<User>>("/users").await.unwrap();
-        assert_eq!(list.len(), 0);
+        assert_eq!(list.len(), 1);
     }
 }
 
 #[cfg(feature = "zfs")]
 mod zfs {
-    use crate::testutil::{start_server, TestClient};
+    use crate::{
+        db::models::User,
+        server::Authentication,
+        testutil::{start_server, TestClient},
+    };
     use buckle::client::ZFSStat;
 
     #[tokio::test]
@@ -273,6 +344,22 @@ mod zfs {
         let _ = buckle::testutil::destroy_zpool("gild", None);
         let zpool = buckle::testutil::create_zpool("gild").unwrap();
         let client = TestClient::new(start_server(Some("buckle-test-gild".into())).await.unwrap());
+
+        let login = User {
+            username: "test-login".into(),
+            plaintext_password: Some("test-password".into()),
+            ..Default::default()
+        };
+        assert!(client.put::<User, User>("/users", login).await.is_ok());
+
+        client
+            .login(Authentication {
+                username: "test-login".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap();
+
         let result: Vec<ZFSStat> = client.post("/zfs/list", "").await.unwrap();
         assert_eq!(result.len(), 0);
         client

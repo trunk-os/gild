@@ -1,14 +1,21 @@
-use crate::{config::Config, server::Server};
+use crate::{
+    config::Config,
+    server::{Authentication, Server},
+};
 use anyhow::{anyhow, Result};
 use buckle::{config::ZFSConfig, testutil::make_server};
 use rand::Fill;
 use rand_core::OsRng;
 use reqwest::Client;
+use reqwest_cookie_store::{CookieStore, CookieStoreMutex};
 use serde::{
     de::{Deserialize, DeserializeOwned},
     Serialize,
 };
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::{
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    sync::Arc,
+};
 use tempfile::NamedTempFile;
 
 pub async fn find_listener() -> Result<SocketAddr> {
@@ -72,8 +79,9 @@ pub struct TestClient {
 
 impl TestClient {
     pub fn new(addr: SocketAddr) -> Self {
+        let store = Arc::new(CookieStoreMutex::new(CookieStore::default()));
         Self {
-            client: Client::new(),
+            client: Client::builder().cookie_provider(store).build().unwrap(),
             baseurl: format!("http://{}", addr),
         }
     }
@@ -159,6 +167,27 @@ impl TestClient {
         } else {
             Ok(O::default())
         }
+    }
+
+    pub async fn login(&self, input: Authentication) -> Result<()> {
+        let form = format!("username={}&password={}", &input.username, &input.password);
+
+        let resp = self
+            .client
+            .post(&format!("{}/session/login", self.baseurl))
+            .header("Content-type", "application/x-www-form-urlencoded")
+            .body(form.as_bytes().to_vec())
+            .send()
+            .await?;
+
+        if resp.status() != 200 {
+            return Err(anyhow!(
+                "{}",
+                String::from_utf8(resp.bytes().await?.to_vec())?
+            ));
+        }
+
+        Ok(())
     }
 
     pub async fn put<I, O>(&self, path: &str, input: I) -> Result<O>

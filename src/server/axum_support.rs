@@ -122,6 +122,7 @@ impl FromRequestParts<Arc<ServerState>> for Account<Option<User>> {
         parts: &mut Parts,
         state: &Arc<ServerState>,
     ) -> core::result::Result<Self, Self::Rejection> {
+        eprintln!("cookies: {:?}", parts.headers);
         Ok(Account(match read_jwt(parts, state).await {
             Ok(x) => x,
             Err(_) => None,

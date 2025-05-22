@@ -28,7 +28,8 @@ sha2 = "*"
 jwt = "*"
 
 [dev-dependencies]
-reqwest = "*"
+reqwest = { version = "*", features = [ "default", "cookies" ] }
+reqwest_cookie_store = "*"
 tempfile = "*"
 
 [features]
