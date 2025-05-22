@@ -1,6 +1,8 @@
 use crate::{config::Config, server::Server};
 use anyhow::{anyhow, Result};
 use buckle::{config::ZFSConfig, testutil::make_server};
+use rand::Fill;
+use rand_core::OsRng;
 use reqwest::Client;
 use serde::{
     de::{Deserialize, DeserializeOwned},
@@ -22,6 +24,12 @@ pub async fn find_listener() -> Result<SocketAddr> {
 
 pub async fn make_config(addr: Option<SocketAddr>, poolname: Option<String>) -> Result<Config> {
     let (_, dbfile) = NamedTempFile::new_in("tmp")?.keep()?;
+
+    let mut key: [u8; 64] = [0u8; 64];
+    let mut salt: [u8; 32] = [0u8; 32];
+    key.try_fill(&mut OsRng)?;
+    salt.try_fill(&mut OsRng)?;
+
     Ok(Config {
         listen: if let Some(addr) = addr {
             addr
@@ -39,6 +47,8 @@ pub async fn make_config(addr: Option<SocketAddr>, poolname: Option<String>) -> 
         })
         .await?,
         db: dbfile,
+        signing_key: key.to_vec(),
+        signing_key_salt: salt.to_vec(),
     })
 }
 

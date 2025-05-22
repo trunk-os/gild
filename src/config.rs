@@ -1,4 +1,6 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
+use rand::Fill;
+use rand_core::OsRng;
 use serde::Deserialize;
 use std::net::SocketAddr;
 
@@ -19,6 +21,12 @@ fn default_listen() -> SocketAddr {
     DEFAULT_LISTEN.parse().unwrap()
 }
 
+fn default_random() -> Vec<u8> {
+    let mut v: [u8; 64] = [0u8; 64];
+    v.try_fill(&mut OsRng).unwrap();
+    v.to_vec()
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     #[serde(default = "default_listen")]
@@ -27,6 +35,10 @@ pub struct Config {
     pub socket: std::path::PathBuf,
     #[serde(default = "default_db")]
     pub db: std::path::PathBuf,
+    #[serde(default = "default_random")]
+    pub signing_key: Vec<u8>,
+    #[serde(default = "default_random")]
+    pub signing_key_salt: Vec<u8>,
 }
 
 impl Default for Config {
@@ -38,7 +50,22 @@ impl Default for Config {
 impl Config {
     pub(crate) fn from_file(file: std::path::PathBuf) -> Result<Self> {
         let file = std::fs::OpenOptions::new().read(true).open(file)?;
-        Ok(serde_yaml_ng::from_reader(file)?)
+        let mut this: Self = serde_yaml_ng::from_reader(file)?;
+        this.convert_signing_key()?;
+        Ok(this)
+    }
+
+    fn convert_signing_key(&mut self) -> Result<()> {
+        let mut buf: [u8; 64] = [0u8; 64];
+        let kdf = argon2::Argon2::default();
+        kdf.hash_password_into(
+            self.signing_key.as_slice(),
+            self.signing_key_salt.as_slice(),
+            &mut buf,
+        )
+        .map_err(|e| anyhow!(e.to_string()))?;
+        self.signing_key = buf.to_vec();
+        Ok(())
     }
 
     pub(crate) async fn get_db(&self) -> Result<crate::db::DB> {
