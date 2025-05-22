@@ -69,7 +69,8 @@ pub(crate) async fn create_user(
 ) -> Result<CborOut<User>> {
     let mut user = DbState::new_uncreated(user);
 
-    // crypt the plaintext password if it is set and erase it
+    // crypt the plaintext password if it is set, otherwise return error (passwords are required at
+    // this step)
     if let Some(password) = user.plaintext_password.clone() {
         user.set_password(password)?;
         user.plaintext_password = None;
@@ -123,7 +124,7 @@ pub(crate) async fn update_user(
         // if we got the record, the id is correct
         user.id = id;
 
-        // crypt the plaintext password if it is set and erase it
+        // crypt the plaintext password if it is set
         if let Some(password) = &user.plaintext_password {
             user.set_password(password.clone())?;
         }
