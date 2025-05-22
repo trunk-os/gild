@@ -173,7 +173,6 @@ pub(crate) async fn update_user(
 // Authentication
 //
 
-#[axum::debug_handler]
 pub(crate) async fn login(
     State(state): State<Arc<ServerState>>,
     Form(form): Form<Authentication>,
@@ -218,6 +217,9 @@ pub(crate) async fn login(
 pub(crate) async fn logout(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
-) -> Result<()> {
-    Ok(())
+) -> Result<Response> {
+    Ok(Response::builder()
+        .status(200)
+        .header("Set-Cookie", "jwt=; Path=/; HttpOnly; Secure")
+        .body(Body::empty())?)
 }

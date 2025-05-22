@@ -14,6 +14,43 @@ mod user {
     use crate::testutil::{start_server, TestClient};
 
     #[tokio::test]
+    async fn login_logout() {
+        let client = TestClient::new(start_server(None).await.unwrap());
+
+        assert!(client.get::<Vec<User>>("/users").await.is_err());
+
+        let login = User {
+            username: "test-login".into(),
+            plaintext_password: Some("test-password".into()),
+            ..Default::default()
+        };
+        assert!(client.put::<User, User>("/users", login).await.is_ok());
+
+        client
+            .login(Authentication {
+                username: "test-login".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap();
+
+        assert!(client.get::<Vec<User>>("/users").await.is_ok());
+
+        client.post::<(), ()>("/session/logout", ()).await.unwrap();
+        assert!(client.get::<Vec<User>>("/users").await.is_err());
+
+        client
+            .login(Authentication {
+                username: "test-login".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap();
+
+        assert!(client.get::<Vec<User>>("/users").await.is_ok());
+    }
+
+    #[tokio::test]
     async fn first_time_setup() {
         let client = TestClient::new(start_server(None).await.unwrap());
 
