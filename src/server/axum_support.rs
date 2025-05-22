@@ -1,8 +1,6 @@
 use axum::response::{IntoResponse, Response};
 use http::status::StatusCode;
 
-// axum requires a ton of boilerplate to do anything sane with a handler
-// this is it. ah, rust. this literally all gets compiled out
 pub(crate) type Result<T> = core::result::Result<T, AppError>;
 
 pub(crate) struct AppError(anyhow::Error);
