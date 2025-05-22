@@ -6,10 +6,21 @@ use argon2::{
     Argon2,
 };
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 use welds::WeldsModel;
 
 #[derive(
-    Debug, Clone, Eq, PartialEq, Ord, PartialOrd, WeldsModel, Default, Serialize, Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    WeldsModel,
+    Default,
+    Serialize,
+    Deserialize,
+    Validate,
 )]
 #[welds(table = "users")]
 #[welds(HasMany(sessions, Session, "user_id"))]
@@ -17,12 +28,17 @@ pub(crate) struct User {
     #[welds(rename = "user_id")]
     #[welds(primary_key)]
     pub id: u32,
+    #[validate(length(min = 3, max = 30))]
     pub username: String,
+    #[validate(length(min = 3, max = 50))]
     pub realname: Option<String>,
+    #[validate(length(min = 6, max = 100), email)] // a@b.cd
     pub email: Option<String>,
+    #[validate(length(min = 10, max = 20))]
     pub phone: Option<String>,
     #[welds(ignore)]
     #[serde(rename = "password")]
+    #[validate(length(min = 8, max = 100))]
     pub plaintext_password: Option<String>,
     #[serde(skip)]
     pub(crate) password: String,
@@ -49,7 +65,17 @@ impl User {
 }
 
 #[derive(
-    Debug, Clone, Eq, PartialEq, Ord, PartialOrd, WeldsModel, Default, Serialize, Deserialize,
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Ord,
+    PartialOrd,
+    WeldsModel,
+    Default,
+    Serialize,
+    Deserialize,
+    Validate,
 )]
 #[welds(table = "sessions")]
 #[welds(BelongsTo(user, User, "user_id"))]

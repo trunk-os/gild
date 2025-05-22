@@ -6,6 +6,7 @@ use axum::extract::{Path, State};
 use axum_serde::Cbor;
 use buckle::client::ZFSStat;
 use std::sync::Arc;
+use validator::Validate;
 use welds::{exts::VecStateExt, state::DbState};
 
 //
@@ -76,6 +77,8 @@ pub(crate) async fn create_user(
         return Err(anyhow!("password is required").into());
     }
 
+    user.validate()?;
+
     user.save(state.db.handle()).await?;
     Ok(CborOut(user.into_inner()))
 }
@@ -124,6 +127,8 @@ pub(crate) async fn update_user(
         if let Some(password) = &user.plaintext_password {
             user.set_password(password.clone())?;
         }
+
+        user.validate()?;
 
         // welds doesn't realize the fields have already changed, these two lines force it to see
         // it.
