@@ -91,7 +91,6 @@ async fn read_jwt(
             .await
             .map_err(|_| err)?
         {
-            eprintln!("{}", user.username);
             return Ok(Some(user.into_inner()));
         } else {
             return Err(err);
