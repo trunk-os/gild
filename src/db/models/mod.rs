@@ -1,5 +1,7 @@
 #[cfg(test)]
 mod tests;
+use std::{collections::BTreeMap, ops::Deref};
+
 use anyhow::{anyhow, Result};
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
@@ -8,6 +10,8 @@ use argon2::{
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 use welds::WeldsModel;
+
+use super::DB;
 
 #[derive(
     Debug,
@@ -82,10 +86,39 @@ impl User {
 pub(crate) struct Session {
     #[welds(rename = "session_id")]
     #[welds(primary_key)]
-    #[serde(skip)]
     pub id: u32,
     pub expires: chrono::DateTime<chrono::Local>,
     pub user_id: u32,
-    #[serde(skip)]
-    secret: Vec<u8>,
+}
+
+type JWTClaims<'a> = BTreeMap<&'a str, String>;
+
+const JWT_SESSION_ID_KEY: &str = "kid";
+const JWT_EXPIRATION_TIME: &str = "exp";
+
+impl Session {
+    pub(crate) async fn from_jwt<'a>(db: &'a DB, claims: JWTClaims<'a>) -> Result<Self> {
+        let session_id: u32 = claims[JWT_SESSION_ID_KEY].parse()?;
+        let list = Self::all()
+            .where_col(|c| c.id.equal(session_id))
+            .run(db.handle())
+            .await?;
+        let session = match list.first() {
+            Some(inner) => inner.deref(),
+            None => return Err(anyhow!("invalid session")),
+        };
+
+        let expires: chrono::DateTime<chrono::Local> = claims[JWT_EXPIRATION_TIME].parse()?;
+        if session.expires.signed_duration_since(expires).num_seconds() < 0 {
+            return Err(anyhow!("session is expired"));
+        }
+        Ok(session.clone())
+    }
+
+    pub(crate) fn to_jwt(&self) -> JWTClaims {
+        let mut claims = JWTClaims::default();
+        claims.insert(JWT_SESSION_ID_KEY, self.id.to_string());
+        claims.insert(JWT_EXPIRATION_TIME, self.expires.to_rfc3339());
+        claims
+    }
 }
