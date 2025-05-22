@@ -31,6 +31,7 @@ use super::DB;
 pub(crate) struct User {
     #[welds(rename = "user_id")]
     #[welds(primary_key)]
+    #[serde(default = "u32::default")]
     pub id: u32,
     #[validate(length(min = 3, max = 30))]
     pub username: String,

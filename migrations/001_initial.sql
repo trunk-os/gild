@@ -4,7 +4,8 @@ create table users (
   realname varchar,
   email varchar,
   phone varchar,
-  password varchar not null
+  password varchar not null,
+  UNIQUE(username)
 );
 
 create table sessions (

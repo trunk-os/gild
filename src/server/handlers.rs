@@ -1,5 +1,8 @@
 #![allow(unused)]
 use crate::db::models::{Session, User};
+use hmac::{Hmac, Mac};
+use jwt::SignWithKey;
+use serde::Deserialize;
 
 use super::{axum_support::*, ServerState};
 use anyhow::anyhow;
@@ -150,7 +153,7 @@ pub(crate) async fn update_user(
 // Authentication
 //
 
-#[derive(Debug, Clone, Default, Validate)]
+#[derive(Debug, Clone, Default, Validate, Deserialize)]
 pub(crate) struct Authentication {
     #[validate(length(min = 3, max = 30))]
     username: String,
@@ -182,8 +185,23 @@ pub(crate) async fn login(
     let mut session = Session::new_assigned(user);
     session.save(state.db.handle()).await?;
 
+    let key: Hmac<sha2::Sha384> = Hmac::new_from_slice(&state.config.signing_key)?;
+    let header = jwt::Header {
+        algorithm: jwt::AlgorithmType::Hs384,
+        ..Default::default()
+    };
+    let claims = session.to_jwt();
+    let jwt = jwt::Token::new(header, claims).sign_with_key(&key)?;
+
     Ok(Response::builder()
         .status(200)
-        .header("Set-Cookie", "lol")
+        .header(
+            "Set-Cookie",
+            &format!(
+                "jwt={}; Expires={}; HttpOnly; SameSite=None; Secure",
+                jwt.as_str(),
+                session.expires.to_rfc2822()
+            ),
+        )
         .body(Body::empty())?)
 }

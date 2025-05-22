@@ -215,6 +215,13 @@ mod user {
             created.push(user);
         }
 
+        for item in table.into_iter() {
+            assert!(client
+                .put::<User, User>("/users", item.clone())
+                .await
+                .is_err());
+        }
+
         let list = client.get::<Vec<User>>("/users").await.unwrap();
         assert_eq!(list.len(), table.len());
 
