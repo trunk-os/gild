@@ -92,7 +92,7 @@ pub(crate) struct Session {
     pub user_id: u32,
 }
 
-type JWTClaims<'a> = BTreeMap<&'a str, String>;
+pub(crate) type JWTClaims = BTreeMap<String, String>;
 
 const JWT_SESSION_ID_KEY: &str = "kid";
 const JWT_EXPIRATION_TIME: &str = "exp";
@@ -109,7 +109,7 @@ impl Session {
         })
     }
 
-    pub(crate) async fn from_jwt<'a>(db: &'a DB, claims: JWTClaims<'a>) -> Result<DbState<Self>> {
+    pub(crate) async fn from_jwt<'a>(db: &'a DB, claims: JWTClaims) -> Result<DbState<Self>> {
         let session_id: u32 = claims[JWT_SESSION_ID_KEY].parse()?;
         let list = Self::all()
             .where_col(|c| c.id.equal(session_id))
@@ -129,8 +129,8 @@ impl Session {
 
     pub(crate) fn to_jwt(&self) -> JWTClaims {
         let mut claims = JWTClaims::default();
-        claims.insert(JWT_SESSION_ID_KEY, self.id.to_string());
-        claims.insert(JWT_EXPIRATION_TIME, self.expires.to_rfc3339());
+        claims.insert(JWT_SESSION_ID_KEY.into(), self.id.to_string());
+        claims.insert(JWT_EXPIRATION_TIME.into(), self.expires.to_rfc3339());
         claims
     }
 }

@@ -22,7 +22,10 @@ use welds::{exts::VecStateExt, state::DbState};
 // status handlers
 //
 
-pub(crate) async fn ping(State(state): State<Arc<ServerState>>) -> Result<()> {
+pub(crate) async fn ping(
+    State(state): State<Arc<ServerState>>,
+    Account(user): Account<Option<User>>,
+) -> Result<()> {
     state.client.status().await?.ping().await?;
     Ok(())
 }
