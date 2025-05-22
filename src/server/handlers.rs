@@ -1,11 +1,17 @@
-use crate::db::models::User;
+#![allow(unused)]
+use crate::db::models::{Session, User};
 
 use super::{axum_support::*, ServerState};
 use anyhow::anyhow;
-use axum::extract::{Path, State};
+use axum::{
+    body::Body,
+    extract::{Path, State},
+    response::Response,
+    Form,
+};
 use axum_serde::Cbor;
 use buckle::client::ZFSStat;
-use std::sync::Arc;
+use std::{ops::Deref, sync::Arc};
 use validator::Validate;
 use welds::{exts::VecStateExt, state::DbState};
 
@@ -138,4 +144,46 @@ pub(crate) async fn update_user(
     } else {
         Err(anyhow!("invalid user").into())
     }
+}
+
+//
+// Authentication
+//
+
+#[derive(Debug, Clone, Default, Validate)]
+pub(crate) struct Authentication {
+    #[validate(length(min = 3, max = 30))]
+    username: String,
+    #[validate(length(min = 8, max = 100))]
+    password: String,
+}
+
+pub(crate) async fn login(
+    State(state): State<Arc<ServerState>>,
+    Form(form): Form<Authentication>,
+) -> Result<Response> {
+    form.validate()?;
+
+    let mut users = User::all()
+        .where_col(|c| c.username.equal(form.username.clone()))
+        .run(state.db.handle())
+        .await?;
+
+    let user = match users.first() {
+        Some(user) => user.deref(),
+        None => return Err(anyhow!("invalid login").into()),
+    };
+
+    match user.login(form.password) {
+        Err(e) => return Err(anyhow!("invalid login").into()),
+        _ => {}
+    }
+
+    let mut session = Session::new_assigned(user);
+    session.save(state.db.handle()).await?;
+
+    Ok(Response::builder()
+        .status(200)
+        .header("Set-Cookie", "lol")
+        .body(Body::empty())?)
 }

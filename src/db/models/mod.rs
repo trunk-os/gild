@@ -49,7 +49,7 @@ pub(crate) struct User {
 }
 
 impl User {
-    pub(crate) fn login(&mut self, password: String) -> Result<()> {
+    pub(crate) fn login(&self, password: String) -> Result<()> {
         let crypt = Argon2::default();
         let parsed = PasswordHash::new(&self.password).map_err(|e| anyhow!(e.to_string()))?;
         Ok(crypt
@@ -97,7 +97,7 @@ const JWT_SESSION_ID_KEY: &str = "kid";
 const JWT_EXPIRATION_TIME: &str = "exp";
 
 impl Session {
-    pub fn new_assigned(user: User) -> DbState<Self> {
+    pub fn new_assigned(user: &User) -> DbState<Self> {
         DbState::new_uncreated(Self {
             user_id: user.id,
             expires: chrono::Local::now()

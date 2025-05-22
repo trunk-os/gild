@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use welds::state::DbState;
 
 use super::User;
@@ -19,7 +21,7 @@ async fn session_jwt() {
     user.username = "erikh".into();
     assert!(user.set_password("horlclax".into()).is_ok());
     user.save(db.handle()).await.unwrap();
-    let mut session = Session::new_assigned(user.into_inner());
+    let mut session = Session::new_assigned(user.deref());
     session.save(db.handle()).await.unwrap();
     let claims = session.to_jwt();
     assert_eq!(
