@@ -1,14 +1,12 @@
-#![allow(unused)]
 use crate::db::models::{Session, User};
 use hmac::{Hmac, Mac};
 use jwt::SignWithKey;
-use serde::{Deserialize, Serialize};
 
 use super::{axum_support::*, Authentication, ServerState};
 use anyhow::anyhow;
 use axum::{
-    body::{Body, HttpBody},
-    extract::{Path, Request, State},
+    body::Body,
+    extract::{Path, State},
     response::Response,
     Form,
 };
@@ -179,7 +177,7 @@ pub(crate) async fn login(
 ) -> Result<Response> {
     form.validate()?;
 
-    let mut users = User::all()
+    let users = User::all()
         .where_col(|c| c.username.equal(form.username.clone()))
         .run(state.db.handle())
         .await?;
@@ -190,7 +188,7 @@ pub(crate) async fn login(
     };
 
     match user.login(form.password) {
-        Err(e) => return Err(anyhow!("invalid login").into()),
+        Err(_) => return Err(anyhow!("invalid login").into()),
         _ => {}
     }
 
@@ -214,10 +212,7 @@ pub(crate) async fn login(
         .body(Body::empty())?)
 }
 
-pub(crate) async fn logout(
-    State(state): State<Arc<ServerState>>,
-    Account(_): Account<User>,
-) -> Result<Response> {
+pub(crate) async fn logout(Account(_): Account<User>) -> Result<Response> {
     Ok(Response::builder()
         .status(200)
         .header("Set-Cookie", "jwt=; Path=/; HttpOnly; Secure")

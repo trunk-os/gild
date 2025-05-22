@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 pub(crate) mod migrations;
 pub(crate) mod models;
 use crate::config::Config;
