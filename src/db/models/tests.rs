@@ -1,7 +1,41 @@
 use welds::state::DbState;
 
 use super::User;
-use crate::testutil::*;
+use crate::{
+    db::models::{Session, JWT_EXPIRATION_TIME, JWT_SESSION_ID_KEY},
+    testutil::*,
+};
+
+#[tokio::test]
+async fn session_jwt() {
+    let db = make_config(None, None)
+        .await
+        .unwrap()
+        .get_db()
+        .await
+        .unwrap();
+
+    let mut user = User::new();
+    user.username = "erikh".into();
+    assert!(user.set_password("horlclax".into()).is_ok());
+    user.save(db.handle()).await.unwrap();
+    let mut session = Session::new_assigned(user.into_inner());
+    session.save(db.handle()).await.unwrap();
+    let claims = session.to_jwt();
+    assert_eq!(
+        claims[JWT_SESSION_ID_KEY].parse::<u32>().unwrap(),
+        session.id
+    );
+    assert_eq!(
+        claims[JWT_EXPIRATION_TIME]
+            .parse::<chrono::DateTime<chrono::Local>>()
+            .unwrap(),
+        session.expires,
+    );
+
+    let session2 = Session::from_jwt(&db, claims).await.unwrap();
+    assert_eq!(session.into_inner(), session2.into_inner());
+}
 
 #[tokio::test]
 async fn user_password() {

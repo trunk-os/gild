@@ -9,7 +9,6 @@ create table users (
 
 create table sessions (
   session_id integer primary key autoincrement,
-  secret blob not null,
   expires datetime not null,
-  user_id varchar not null
+  user_id integer not null
 );

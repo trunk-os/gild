@@ -9,7 +9,7 @@ use argon2::{
 };
 use serde::{Deserialize, Serialize};
 use validator::Validate;
-use welds::WeldsModel;
+use welds::{state::DbState, WeldsModel};
 
 use super::DB;
 
@@ -97,18 +97,18 @@ const JWT_SESSION_ID_KEY: &str = "kid";
 const JWT_EXPIRATION_TIME: &str = "exp";
 
 impl Session {
-    pub fn new_assigned(user: User) -> Self {
-        Self {
+    pub fn new_assigned(user: User) -> DbState<Self> {
+        DbState::new_uncreated(Self {
             user_id: user.id,
             expires: chrono::Local::now()
                 .checked_add_signed(chrono::TimeDelta::days(7))
                 .unwrap()
                 .into(),
             ..Default::default()
-        }
+        })
     }
 
-    pub(crate) async fn from_jwt<'a>(db: &'a DB, claims: JWTClaims<'a>) -> Result<Self> {
+    pub(crate) async fn from_jwt<'a>(db: &'a DB, claims: JWTClaims<'a>) -> Result<DbState<Self>> {
         let session_id: u32 = claims[JWT_SESSION_ID_KEY].parse()?;
         let list = Self::all()
             .where_col(|c| c.id.equal(session_id))
@@ -123,7 +123,7 @@ impl Session {
         if session.expires.signed_duration_since(expires).num_seconds() < 0 {
             return Err(anyhow!("session is expired"));
         }
-        Ok(session.clone())
+        Ok(DbState::db_loaded(session.clone()))
     }
 
     pub(crate) fn to_jwt(&self) -> JWTClaims {
