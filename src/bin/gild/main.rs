@@ -17,6 +17,5 @@ async fn main() -> Result<()> {
         signing_key: key.to_vec(),
         signing_key_salt: salt.to_vec(),
     };
-    Server::new(config).await?.start().await?;
-    Ok(())
+    Server::new(config).await?.start().await.into()
 }
