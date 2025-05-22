@@ -38,7 +38,7 @@ pub struct Config {
     #[serde(default = "default_random")]
     pub signing_key: Vec<u8>,
     #[serde(default = "default_random")]
-    pub signing_key_salt: Vec<u8>,
+    signing_key_salt: Vec<u8>,
 }
 
 impl Default for Config {
@@ -64,7 +64,12 @@ impl Config {
             &mut buf,
         )
         .map_err(|e| anyhow!(e.to_string()))?;
+
+        // overwrite the keys in the config
+        // we never generate (just parse) this format so this is a safe conversion.
         self.signing_key = buf.to_vec();
+        self.signing_key_salt = Vec::default();
+
         Ok(())
     }
 
