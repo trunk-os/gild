@@ -97,6 +97,17 @@ const JWT_SESSION_ID_KEY: &str = "kid";
 const JWT_EXPIRATION_TIME: &str = "exp";
 
 impl Session {
+    pub fn new_assigned(user: User) -> Self {
+        Self {
+            user_id: user.id,
+            expires: chrono::Local::now()
+                .checked_add_signed(chrono::TimeDelta::days(7))
+                .unwrap()
+                .into(),
+            ..Default::default()
+        }
+    }
+
     pub(crate) async fn from_jwt<'a>(db: &'a DB, claims: JWTClaims<'a>) -> Result<Self> {
         let session_id: u32 = claims[JWT_SESSION_ID_KEY].parse()?;
         let list = Self::all()
