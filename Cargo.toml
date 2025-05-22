@@ -22,6 +22,7 @@ uuid = "*"
 chrono = { version = "*", features = [ "serde" ] }
 rand_core = { version = "*", features = [ "getrandom" ] }
 rand = "*"
+validator = { version = "*", features = [ "derive" ] }
 
 [dev-dependencies]
 reqwest = "*"
