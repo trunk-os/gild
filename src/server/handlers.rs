@@ -69,6 +69,8 @@ pub(crate) async fn create_user(
 ) -> Result<CborOut<User>> {
     let mut user = DbState::new_uncreated(user);
 
+    user.validate()?;
+
     // crypt the plaintext password if it is set, otherwise return error (passwords are required at
     // this step)
     if let Some(password) = user.plaintext_password.clone() {
@@ -77,8 +79,6 @@ pub(crate) async fn create_user(
     } else {
         return Err(anyhow!("password is required").into());
     }
-
-    user.validate()?;
 
     user.save(state.db.handle()).await?;
     Ok(CborOut(user.into_inner()))
@@ -123,13 +123,12 @@ pub(crate) async fn update_user(
     if let Some(_) = User::find_by_id(state.db.handle(), id).await? {
         // if we got the record, the id is correct
         user.id = id;
+        user.validate()?;
 
         // crypt the plaintext password if it is set
         if let Some(password) = &user.plaintext_password {
             user.set_password(password.clone())?;
         }
-
-        user.validate()?;
 
         // welds doesn't realize the fields have already changed, these two lines force it to see
         // it.

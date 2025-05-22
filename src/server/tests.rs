@@ -13,12 +13,161 @@ mod user {
     use crate::testutil::{start_server, TestClient};
 
     #[tokio::test]
+    async fn users_validate() {
+        let client = TestClient::new(start_server(None).await.unwrap());
+        let list = client.get::<Vec<User>>("/users").await.unwrap();
+        assert_eq!(list.len(), 0);
+
+        let table: &[User] = &[
+            User {
+                username: "".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("erikhollensbe@proton.me".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikh".into(),
+                realname: Some("".into()),
+                email: Some("erikhollensbe@proton.me".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikh".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikh".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("erikhollensbe@proton.me".into()),
+                phone: Some("".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikh".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("erikhollensbe@proton.me".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("erikhollensbe@proton.me".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikh".into(),
+                realname: Some("Erik Hollensbeaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".into()),
+                email: Some("erikhollensbe@proton.me".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikh".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("erikhollensbe@proton.meaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikh".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("erikhollensbe@proton.me".into()),
+                phone: Some("800-867-5309aaaaaaaaaaaaaaaaaaaa".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikh".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("erikhollensbe@proton.me".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("horlclaxaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".into()),
+                ..Default::default()
+            },
+            User {
+                username: "er".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("erikhollensbe@proton.me".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikh".into(),
+                realname: Some("Er".into()),
+                email: Some("erikhollensbe@proton.me".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikh".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("e@e".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikh".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("erikhollensbe@proton.me".into()),
+                phone: Some("867-5309".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikh".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("erikhollensbe@proton.me".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("horlcla".into()),
+                ..Default::default()
+            },
+            User {
+                username: "erikh".into(),
+                realname: Some("Erik Hollensbe".into()),
+                email: Some("erikhollensbe".into()),
+                phone: Some("800-867-5309".into()),
+                plaintext_password: Some("horlclax".into()),
+                ..Default::default()
+            },
+        ];
+
+        for (x, item) in table.iter().enumerate() {
+            assert!(
+                client
+                    .put::<User, User>("/users", item.clone())
+                    .await
+                    .is_err(),
+                "#{} succeeded",
+                x
+            )
+        }
+    }
+
+    #[tokio::test]
     async fn users_crud() {
         let client = TestClient::new(start_server(None).await.unwrap());
         let list = client.get::<Vec<User>>("/users").await.unwrap();
         assert_eq!(list.len(), 0);
 
-        let table: &mut [User] = &mut [
+        let table: &[User] = &[
             User {
                 username: "erikh".into(),
                 realname: Some("Erik Hollensbe".into()),
@@ -32,7 +181,7 @@ mod user {
                 realname: Some("Scarlett Hollensbe".into()),
                 email: Some("scarlett@hollensbe.org".into()),
                 phone: None,
-                plaintext_password: Some("foobar".into()),
+                plaintext_password: Some("foobar123".into()),
                 ..Default::default()
             },
             User {
@@ -45,13 +194,13 @@ mod user {
             User {
                 username: "day".into(),
                 realname: Some("Day Waterbury".into()),
-                plaintext_password: Some("mmph".into()),
+                plaintext_password: Some("mmph1234".into()),
                 ..Default::default()
             },
             User {
                 username: "dpnvektor".into(),
                 realname: Some("Julian Sutter".into()),
-                plaintext_password: Some("meh".into()),
+                plaintext_password: Some("meh12345".into()),
                 ..Default::default()
             },
         ];
@@ -59,8 +208,6 @@ mod user {
         let mut created = Vec::new();
 
         for item in table.into_iter() {
-            item.set_password(item.plaintext_password.clone().unwrap())
-                .unwrap();
             let user = client
                 .put::<User, User>("/users", item.clone())
                 .await
