@@ -38,7 +38,7 @@ pub struct Config {
     #[serde(default = "default_random")]
     pub signing_key: Vec<u8>,
     #[serde(default = "default_random")]
-    signing_key_salt: Vec<u8>,
+    pub signing_key_salt: Vec<u8>,
 }
 
 impl Default for Config {
