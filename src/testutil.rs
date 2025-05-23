@@ -1,6 +1,6 @@
 use crate::{
     config::Config,
-    server::{Authentication, Server},
+    server::{Authentication, Server, Token},
 };
 use anyhow::{anyhow, Result};
 use buckle::{config::ZFSConfig, testutil::make_server};
@@ -73,6 +73,7 @@ pub async fn start_server(poolname: Option<String>) -> Result<SocketAddr> {
 pub struct TestClient {
     client: Client,
     baseurl: String,
+    token: Option<String>,
 }
 
 impl TestClient {
@@ -81,18 +82,31 @@ impl TestClient {
         Self {
             client: Client::builder().cookie_provider(store).build().unwrap(),
             baseurl: format!("http://{}", addr),
+            token: None,
         }
+    }
+
+    pub async fn login(&mut self, input: Authentication) -> Result<()> {
+        self.token = Default::default();
+        let response = self
+            .post::<Authentication, Token>("/session/login", input)
+            .await?;
+        self.token = Some(response.token);
+        Ok(())
     }
 
     pub async fn get<T>(&self, path: &str) -> Result<T>
     where
         T: for<'de> Deserialize<'de> + DeserializeOwned + Default,
     {
-        let resp = self
-            .client
-            .get(&format!("{}{}", self.baseurl, path))
-            .send()
-            .await?;
+        let mut req = self.client.get(&format!("{}{}", self.baseurl, path));
+
+        if let Some(token) = &self.token {
+            req = req.header("Authorization", &format!("Bearer {}", token))
+        }
+
+        let resp = req.send().await?;
+
         if resp.status() != 200 {
             return Err(anyhow!(
                 "{}",
@@ -113,11 +127,14 @@ impl TestClient {
     where
         T: for<'de> Deserialize<'de> + DeserializeOwned + Default,
     {
-        let resp = self
-            .client
-            .delete(&format!("{}{}", self.baseurl, path))
-            .send()
-            .await?;
+        let mut req = self.client.delete(&format!("{}{}", self.baseurl, path));
+
+        if let Some(token) = &self.token {
+            req = req.header("Authorization", &format!("Bearer {}", token))
+        }
+
+        let resp = req.send().await?;
+
         if resp.status() != 200 {
             return Err(anyhow!(
                 "{}",
@@ -143,13 +160,16 @@ impl TestClient {
         let mut buf = std::io::Cursor::new(&mut inner);
         ciborium::into_writer(&input, &mut buf)?;
 
-        let resp = self
+        let mut req = self
             .client
             .post(&format!("{}{}", self.baseurl, path))
-            .header("Content-type", "application/cbor")
-            .body(buf.into_inner().to_vec())
-            .send()
-            .await?;
+            .header("Content-type", "application/cbor");
+
+        if let Some(token) = &self.token {
+            req = req.header("Authorization", &format!("Bearer {}", token))
+        }
+
+        let resp = req.body(buf.into_inner().to_vec()).send().await?;
 
         if resp.status() != 200 {
             return Err(anyhow!(
@@ -167,27 +187,6 @@ impl TestClient {
         }
     }
 
-    pub async fn login(&self, input: Authentication) -> Result<()> {
-        let form = format!("username={}&password={}", &input.username, &input.password);
-
-        let resp = self
-            .client
-            .post(&format!("{}/session/login", self.baseurl))
-            .header("Content-type", "application/x-www-form-urlencoded")
-            .body(form.as_bytes().to_vec())
-            .send()
-            .await?;
-
-        if resp.status() != 200 {
-            return Err(anyhow!(
-                "{}",
-                String::from_utf8(resp.bytes().await?.to_vec())?
-            ));
-        }
-
-        Ok(())
-    }
-
     pub async fn put<I, O>(&self, path: &str, input: I) -> Result<O>
     where
         I: Serialize,
@@ -197,13 +196,16 @@ impl TestClient {
         let mut buf = std::io::Cursor::new(&mut inner);
         ciborium::into_writer(&input, &mut buf)?;
 
-        let resp = self
+        let mut req = self
             .client
             .put(&format!("{}{}", self.baseurl, path))
-            .header("Content-type", "application/cbor")
-            .body(buf.into_inner().to_vec())
-            .send()
-            .await?;
+            .header("Content-type", "application/cbor");
+
+        if let Some(token) = &self.token {
+            req = req.header("Authorization", &format!("Bearer {}", token))
+        }
+
+        let resp = req.body(buf.into_inner().to_vec()).send().await?;
 
         if resp.status() != 200 {
             return Err(anyhow!(

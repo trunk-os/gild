@@ -15,7 +15,7 @@ mod user {
 
     #[tokio::test]
     async fn login_logout() {
-        let client = TestClient::new(start_server(None).await.unwrap());
+        let mut client = TestClient::new(start_server(None).await.unwrap());
 
         assert!(client.get::<Vec<User>>("/users").await.is_err());
 
@@ -35,24 +35,11 @@ mod user {
             .unwrap();
 
         assert!(client.get::<Vec<User>>("/users").await.is_ok());
-
-        client.post::<(), ()>("/session/logout", ()).await.unwrap();
-        assert!(client.get::<Vec<User>>("/users").await.is_err());
-
-        client
-            .login(Authentication {
-                username: "test-login".into(),
-                password: "test-password".into(),
-            })
-            .await
-            .unwrap();
-
-        assert!(client.get::<Vec<User>>("/users").await.is_ok());
     }
 
     #[tokio::test]
     async fn first_time_setup() {
-        let client = TestClient::new(start_server(None).await.unwrap());
+        let mut client = TestClient::new(start_server(None).await.unwrap());
 
         let login = User {
             username: "test-login".into(),
@@ -86,7 +73,7 @@ mod user {
 
     #[tokio::test]
     async fn users_validate() {
-        let client = TestClient::new(start_server(None).await.unwrap());
+        let mut client = TestClient::new(start_server(None).await.unwrap());
 
         let login = User {
             username: "test-login".into(),
@@ -251,7 +238,7 @@ mod user {
 
     #[tokio::test]
     async fn users_crud() {
-        let client = TestClient::new(start_server(None).await.unwrap());
+        let mut client = TestClient::new(start_server(None).await.unwrap());
 
         let login = User {
             username: "test-login".into(),
@@ -380,7 +367,8 @@ mod zfs {
     async fn zfs_basic() {
         let _ = buckle::testutil::destroy_zpool("gild", None);
         let zpool = buckle::testutil::create_zpool("gild").unwrap();
-        let client = TestClient::new(start_server(Some("buckle-test-gild".into())).await.unwrap());
+        let mut client =
+            TestClient::new(start_server(Some("buckle-test-gild".into())).await.unwrap());
 
         let login = User {
             username: "test-login".into(),

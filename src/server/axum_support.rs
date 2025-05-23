@@ -63,40 +63,28 @@ where
 pub(crate) struct Account<T>(pub T);
 
 async fn read_jwt(parts: &mut Parts, state: &Arc<ServerState>) -> Result<Option<User>> {
-    let err: AppError = anyhow!("invalid cookie").into();
-    let cookies = parts.headers.get(http::header::COOKIE).ok_or(err.clone())?;
-    let cookies = cookies.to_str().map_err(|_| err.clone())?.split("; ");
-    let mut jwt: Option<Token<Header, JWTClaims, Verified>> = None;
-    for cookie in cookies {
-        let parts = cookie.splitn(2, "=").collect::<Vec<&str>>();
-        if parts.len() != 2 {
-            return Err(err);
-        }
+    let err: AppError = anyhow!("invalid token").into();
+    let token = parts
+        .headers
+        .get(http::header::AUTHORIZATION)
+        .ok_or(err.clone())?;
 
-        if parts[0] == "jwt" {
-            let signing_key: Hmac<sha2::Sha384> =
-                Hmac::new_from_slice(&state.config.signing_key).map_err(|_| err.clone())?;
-            let token: Token<Header, JWTClaims, Verified> = parts[1]
-                .verify_with_key(&signing_key)
-                .map_err(|_| err.clone())?;
-            jwt.replace(token);
-            break;
-        }
-    }
+    let token = token.to_str()?.strip_prefix("Bearer ").unwrap();
+    let signing_key: Hmac<sha2::Sha384> =
+        Hmac::new_from_slice(&state.config.signing_key).map_err(|_| err.clone())?;
+    let token: Token<Header, JWTClaims, Verified> = token
+        .verify_with_key(&signing_key)
+        .map_err(|_| err.clone())?;
 
-    if let Some(jwt) = jwt {
-        let session = Session::from_jwt(&state.db, jwt.claims().clone())
-            .await
-            .map_err(|_| err.clone())?;
-        // FIXME not sure why relationships are useless here
-        if let Some(user) = User::find_by_id(state.db.handle(), session.user_id)
-            .await
-            .map_err(|_| err.clone())?
-        {
-            Ok(Some(user.into_inner()))
-        } else {
-            Err(err.clone())
-        }
+    let session = Session::from_jwt(&state.db, token.claims().clone())
+        .await
+        .map_err(|_| err.clone())?;
+    // FIXME not sure why relationships are useless here
+    if let Some(user) = User::find_by_id(state.db.handle(), session.user_id)
+        .await
+        .map_err(|_| err.clone())?
+    {
+        Ok(Some(user.into_inner()))
     } else {
         Ok(None)
     }

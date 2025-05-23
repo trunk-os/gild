@@ -2,14 +2,9 @@ use crate::db::models::{Session, User};
 use hmac::{Hmac, Mac};
 use jwt::SignWithKey;
 
-use super::{axum_support::*, Authentication, ServerState};
+use super::{axum_support::*, Authentication, ServerState, Token};
 use anyhow::anyhow;
-use axum::{
-    body::Body,
-    extract::{Path, State},
-    response::Response,
-    Form,
-};
+use axum::extract::{Path, State};
 use axum_serde::Cbor;
 use buckle::client::ZFSStat;
 use std::{ops::Deref, sync::Arc};
@@ -173,8 +168,8 @@ pub(crate) async fn update_user(
 
 pub(crate) async fn login(
     State(state): State<Arc<ServerState>>,
-    Form(form): Form<Authentication>,
-) -> Result<Response> {
+    Cbor(form): Cbor<Authentication>,
+) -> Result<CborOut<Token>> {
     form.validate()?;
 
     let users = User::all()
@@ -201,19 +196,5 @@ pub(crate) async fn login(
     };
     let claims = session.to_jwt();
     let jwt = jwt::Token::new(header, claims).sign_with_key(&key)?;
-
-    Ok(Response::builder()
-        .status(200)
-        .header(
-            "Set-Cookie",
-            &format!("jwt={}; Path=/; HttpOnly; Secure", jwt.as_str(),),
-        )
-        .body(Body::empty())?)
-}
-
-pub(crate) async fn logout(Account(_): Account<User>) -> Result<Response> {
-    Ok(Response::builder()
-        .status(200)
-        .header("Set-Cookie", "jwt=; Path=/; HttpOnly; Secure")
-        .body(Body::empty())?)
+    Ok(CborOut(Token { token: jwt.into() }))
 }

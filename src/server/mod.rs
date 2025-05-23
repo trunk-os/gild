@@ -26,6 +26,11 @@ pub struct ServerState {
     config: Config,
 }
 
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub(crate) struct Token {
+    pub(crate) token: String,
+}
+
 #[derive(Debug, Clone, Default, Validate, Serialize, Deserialize)]
 pub struct Authentication {
     #[validate(length(min = 3, max = 30))]
@@ -55,7 +60,6 @@ impl Server {
                     delete(remove_user).get(get_user).post(update_user),
                 )
                 .route("/session/login", post(login))
-                .route("/session/logout", post(logout))
                 .with_state(Arc::new(ServerState {
                     client: config.get_client()?,
                     db: config.get_db().await?,
