@@ -52,6 +52,7 @@ pub async fn make_config(addr: Option<SocketAddr>, poolname: Option<String>) -> 
         })
         .await?,
         db: dbfile,
+        origin: "http://localhost".into(),
         signing_key: key.to_vec(),
         signing_key_salt: salt.to_vec(),
     })

@@ -33,18 +33,30 @@ pub(crate) struct User {
     #[welds(primary_key)]
     #[serde(default = "u32::default")]
     pub id: u32,
+
     #[validate(length(min = 3, max = 30))]
     pub username: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[validate(length(min = 3, max = 50))]
     pub realname: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[validate(length(min = 6, max = 100), email)] // a@b.cd
     pub email: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[validate(length(min = 10, max = 20))]
     pub phone: Option<String>,
+
     #[welds(ignore)]
+    // this should really skip totally, but is
+    // needed for tests.
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "password")]
     #[validate(length(min = 8, max = 100))]
     pub plaintext_password: Option<String>,
+
     #[serde(skip)]
     pub(crate) password: String,
 }

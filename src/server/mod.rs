@@ -60,6 +60,7 @@ impl Server {
                     delete(remove_user).get(get_user).post(update_user),
                 )
                 .route("/session/login", post(login))
+                .route("/session/me", get(me))
                 .with_state(Arc::new(ServerState {
                     client: config.get_client()?,
                     db: config.get_db().await?,
