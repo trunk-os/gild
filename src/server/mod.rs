@@ -16,7 +16,7 @@ use http::{header::*, Method};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tower::ServiceBuilder;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 use validator::Validate;
 
 #[derive(Debug, Clone)]
@@ -74,7 +74,10 @@ impl Server {
                                 Method::TRACE,
                                 Method::OPTIONS,
                             ])
-                            .allow_origin(Any)
+                            .allow_credentials(true)
+                            .allow_origin(tower_http::cors::AllowOrigin::exact(
+                                HeaderValue::from_str("http://christopher-office:3000")?,
+                            ))
                             .allow_headers([CONTENT_TYPE, ACCEPT])
                             .allow_private_network(true),
                     ),
