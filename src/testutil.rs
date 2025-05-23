@@ -42,7 +42,6 @@ pub async fn make_config(addr: Option<SocketAddr>, poolname: Option<String>) -> 
         } else {
             SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 0)
         },
-
         socket: make_server(if let Some(poolname) = poolname {
             Some(buckle::config::Config {
                 socket: buckle::testutil::find_listener()?,
