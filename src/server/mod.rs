@@ -82,7 +82,7 @@ impl Server {
                             .allow_origin(tower_http::cors::AllowOrigin::exact(
                                 HeaderValue::from_str("http://christopher-office:3000")?,
                             ))
-                            .allow_headers([CONTENT_TYPE, ACCEPT])
+                            .allow_headers([CONTENT_TYPE, ACCEPT, AUTHORIZATION])
                             .allow_private_network(true),
                     ),
                 ),
