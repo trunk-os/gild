@@ -26,6 +26,7 @@ validator = { version = "*", features = [ "derive" ] }
 hmac = "*"
 sha2 = "*"
 jwt = "*"
+problem_details = { version = "*", features = [ "serde", "json", "axum" ] }
 
 [dev-dependencies]
 reqwest = { version = "*", features = [ "default", "cookies" ] }

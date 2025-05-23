@@ -890,6 +890,7 @@ dependencies = [
  "hmac",
  "http",
  "jwt",
+ "problem_details",
  "rand",
  "rand_core",
  "reqwest",
@@ -1033,6 +1034,16 @@ dependencies = [
  "http",
  "http-body",
  "pin-project-lite",
+]
+
+[[package]]
+name = "http-serde"
+version = "2.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f056c8559e3757392c8d091e796416e4649d8e49e88b8d76df6c002f05027fd"
+dependencies = [
+ "http",
+ "serde",
 ]
 
 [[package]]
@@ -1738,6 +1749,19 @@ checksum = "664ec5419c51e34154eec046ebcba56312d5a2fc3b09a06da188e1ad21afadf6"
 dependencies = [
  "proc-macro2",
  "syn 2.0.101",
+]
+
+[[package]]
+name = "problem_details"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "777f7cf33eca7f41687a047c133ec7df9a03b13757a2666062d8b9cfa446e397"
+dependencies = [
+ "axum",
+ "http",
+ "http-serde",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
