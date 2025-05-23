@@ -147,7 +147,7 @@ pub(crate) async fn update_user(
     Account(_): Account<User>,
     Cbor(mut user): Cbor<User>,
 ) -> Result<()> {
-    if let Some(_) = User::find_by_id(state.db.handle(), id).await? {
+    if User::find_by_id(state.db.handle(), id).await?.is_some() {
         // if we got the record, the id is correct
         user.id = id;
         user.validate()?;
@@ -187,9 +187,8 @@ pub(crate) async fn login(
         None => return Err(anyhow!("invalid login").into()),
     };
 
-    match user.login(form.password) {
-        Err(_) => return Err(anyhow!("invalid login").into()),
-        _ => {}
+    if user.login(form.password).is_err() {
+        return Err(anyhow!("invalid login").into());
     }
 
     let mut session = Session::new_assigned(user);

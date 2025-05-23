@@ -21,7 +21,7 @@ impl std::fmt::Debug for DB {
 }
 
 pub async fn migrate(filename: std::path::PathBuf) -> Result<()> {
-    Ok(migrations::migrate(filename).await?)
+    migrations::migrate(filename).await
 }
 
 impl DB {
@@ -43,7 +43,7 @@ impl DB {
         Ok(this)
     }
 
-    async fn create<'a>(config: Config) -> anyhow::Result<()> {
+    async fn create(config: Config) -> anyhow::Result<()> {
         sqlx::sqlite::CREATE_DB_WAL.store(true, std::sync::atomic::Ordering::Release);
 
         Sqlite::create_database(&format!("sqlite:{}", config.db.to_str().unwrap())).await?;

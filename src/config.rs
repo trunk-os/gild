@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Result};
 use rand::Fill;
-use rand_core::OsRng;
 use serde::Deserialize;
 use std::net::SocketAddr;
 
@@ -23,7 +22,7 @@ fn default_listen() -> SocketAddr {
 
 fn default_random() -> Vec<u8> {
     let mut v: [u8; 64] = [0u8; 64];
-    v.try_fill(&mut OsRng).unwrap();
+    v.fill(&mut rand::rng());
     v.to_vec()
 }
 
@@ -74,7 +73,7 @@ impl Config {
     }
 
     pub(crate) async fn get_db(&self) -> Result<crate::db::DB> {
-        Ok(crate::db::DB::new(self.clone()).await?)
+        crate::db::DB::new(self.clone()).await
     }
 
     pub(crate) fn get_client(&self) -> Result<buckle::client::Client> {

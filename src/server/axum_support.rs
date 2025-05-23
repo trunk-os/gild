@@ -49,9 +49,9 @@ where
     fn into_response(self) -> Response {
         let mut inner = Vec::with_capacity(65535);
         let mut buf = std::io::Cursor::new(&mut inner);
-        match ciborium::into_writer(&self.0, &mut buf) {
-            Err(e) => return Into::<AppError>::into(anyhow!(e)).into_response(),
-            _ => {}
+
+        if let Err(e) = ciborium::into_writer(&self.0, &mut buf) {
+            return Into::<AppError>::into(anyhow!(e)).into_response();
         }
 
         Response::builder()
@@ -93,12 +93,12 @@ async fn read_jwt(parts: &mut Parts, state: &Arc<ServerState>) -> Result<Option<
             .await
             .map_err(|_| err.clone())?
         {
-            return Ok(Some(user.into_inner()));
+            Ok(Some(user.into_inner()))
         } else {
-            return Err(err.clone());
+            Err(err.clone())
         }
     } else {
-        return Ok(None);
+        Ok(None)
     }
 }
 
@@ -124,9 +124,6 @@ impl FromRequestParts<Arc<ServerState>> for Account<Option<User>> {
         parts: &mut Parts,
         state: &Arc<ServerState>,
     ) -> core::result::Result<Self, Self::Rejection> {
-        Ok(Account(match read_jwt(parts, state).await {
-            Ok(x) => x,
-            Err(_) => None,
-        }))
+        Ok(Account(read_jwt(parts, state).await.unwrap_or_default()))
     }
 }

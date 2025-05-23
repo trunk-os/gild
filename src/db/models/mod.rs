@@ -53,9 +53,9 @@ impl User {
     pub(crate) fn login(&self, password: String) -> Result<()> {
         let crypt = Argon2::default();
         let parsed = PasswordHash::new(&self.password).map_err(|e| anyhow!(e.to_string()))?;
-        Ok(crypt
+        crypt
             .verify_password(password.as_bytes(), &parsed)
-            .map_err(|e| anyhow!(e.to_string()))?)
+            .map_err(|e| anyhow!(e.to_string()))
     }
 
     pub(crate) fn set_password(&mut self, password: String) -> Result<()> {
@@ -103,13 +103,12 @@ impl Session {
             user_id: user.id,
             expires: chrono::Local::now()
                 .checked_add_signed(chrono::TimeDelta::days(7))
-                .unwrap()
-                .into(),
+                .unwrap(),
             ..Default::default()
         })
     }
 
-    pub(crate) async fn from_jwt<'a>(db: &'a DB, claims: JWTClaims) -> Result<DbState<Self>> {
+    pub(crate) async fn from_jwt(db: &DB, claims: JWTClaims) -> Result<DbState<Self>> {
         let session_id: u32 = claims[JWT_SESSION_ID_KEY].parse()?;
         let list = Self::all()
             .where_col(|c| c.id.equal(session_id))
