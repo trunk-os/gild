@@ -55,6 +55,7 @@ where
         }
 
         Response::builder()
+            .header("Content-Type", "application/cbor")
             .body(axum::body::Body::from(buf.into_inner().to_vec()))
             .unwrap()
     }
