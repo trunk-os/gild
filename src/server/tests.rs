@@ -450,7 +450,7 @@ mod zfs {
         assert_eq!(result[0].name, "volume2");
         assert_eq!(result[0].full_name, "buckle-test-gild/volume2");
         assert_ne!(result[0].size, 0);
-        assert!(result[0].size < 5 * 1024 * 1024 * 1024 && result[0].size > 4 * 1024 * 1024 * 1024);
+        assert!(result[0].size < 6 * 1024 * 1024 && result[0].size > 4 * 1024 * 1024);
         assert_ne!(result[0].avail, 0);
         assert_ne!(result[0].refer, 0);
         assert_ne!(result[0].used, 0);
