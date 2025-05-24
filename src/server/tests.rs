@@ -431,6 +431,31 @@ mod zfs {
         assert_ne!(result[0].used, 0);
         assert_eq!(result[0].mountpoint, None);
 
+        client
+            .post::<_, ()>(
+                "/zfs/modify_volume",
+                buckle::client::ModifyVolume {
+                    name: "volume".into(),
+                    modifications: buckle::client::Volume {
+                        name: "volume2".into(),
+                        size: 5 * 1024 * 1024,
+                    },
+                },
+            )
+            .await
+            .unwrap();
+
+        let result: Vec<ZFSStat> = client.post("/zfs/list", "volume2").await.unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name, "volume2");
+        assert_eq!(result[0].full_name, "buckle-test-gild/volume2");
+        assert_ne!(result[0].size, 0);
+        assert!(result[0].size < 5 * 1024 * 1024 * 1024 && result[0].size > 4 * 1024 * 1024 * 1024);
+        assert_ne!(result[0].avail, 0);
+        assert_ne!(result[0].refer, 0);
+        assert_ne!(result[0].used, 0);
+        assert_eq!(result[0].mountpoint, None);
+
         let result: Vec<ZFSStat> = client.post("/zfs/list", "dataset").await.unwrap();
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].name, "dataset");
@@ -445,18 +470,45 @@ mod zfs {
         );
 
         client
-            .post::<_, ()>("/zfs/destroy", "dataset")
+            .post::<_, ()>(
+                "/zfs/modify_dataset",
+                buckle::client::ModifyDataset {
+                    name: "dataset".into(),
+                    modifications: buckle::client::Dataset {
+                        name: "dataset2".into(),
+                        quota: Some(5 * 1024 * 1024),
+                    },
+                },
+            )
             .await
             .unwrap();
-        let result: Vec<ZFSStat> = client.post("/zfs/list", "dataset").await.unwrap();
+
+        let result: Vec<ZFSStat> = client.post("/zfs/list", "dataset2").await.unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].name, "dataset2");
+        assert_eq!(result[0].full_name, "buckle-test-gild/dataset2");
+        assert_ne!(result[0].size, 0);
+        assert_ne!(result[0].avail, 0);
+        assert_ne!(result[0].refer, 0);
+        assert_ne!(result[0].used, 0);
+        assert_eq!(
+            result[0].mountpoint,
+            Some("/buckle-test-gild/dataset2".into())
+        );
+
+        client
+            .post::<_, ()>("/zfs/destroy", "dataset2")
+            .await
+            .unwrap();
+        let result: Vec<ZFSStat> = client.post("/zfs/list", "dataset2").await.unwrap();
         assert_eq!(result.len(), 0);
         let result: Vec<ZFSStat> = client.post("/zfs/list", "").await.unwrap();
         assert_eq!(result.len(), 1);
         client
-            .post::<_, ()>("/zfs/destroy", "volume")
+            .post::<_, ()>("/zfs/destroy", "volume2")
             .await
             .unwrap();
-        let result: Vec<ZFSStat> = client.post("/zfs/list", "volume").await.unwrap();
+        let result: Vec<ZFSStat> = client.post("/zfs/list", "volume2").await.unwrap();
         assert_eq!(result.len(), 0);
 
         buckle::testutil::destroy_zpool("gild", Some(&zpool)).unwrap();
