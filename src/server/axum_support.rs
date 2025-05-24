@@ -64,7 +64,15 @@ where
 pub(crate) struct Account<T>(pub T);
 
 async fn read_jwt(parts: &mut Parts, state: &Arc<ServerState>) -> Result<Option<User>> {
-    let err: AppError = anyhow!("invalid token").into();
+    // FIXME: we want to hide the error from the end user to avoid giving them information about this
+    // process. We should, however, log the errors for debugging purposes, which isn't done yet.
+    let err = AppError(
+        ProblemDetails::new()
+            .with_detail("Please enter correct credentials")
+            .with_status(http::StatusCode::UNAUTHORIZED)
+            .with_title("Invalid Login"),
+    );
+
     let token = parts
         .headers
         .get(http::header::AUTHORIZATION)

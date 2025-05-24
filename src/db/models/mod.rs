@@ -29,8 +29,8 @@ use super::DB;
 #[welds(table = "users")]
 #[welds(HasMany(sessions, Session, "user_id"))]
 pub(crate) struct User {
-    #[welds(rename = "user_id")]
     #[welds(primary_key)]
+    #[welds(rename = "user_id")]
     #[serde(default = "u32::default")]
     pub id: u32,
 
@@ -97,8 +97,8 @@ impl User {
 #[welds(table = "sessions")]
 #[welds(BelongsTo(user, User, "user_id"))]
 pub(crate) struct Session {
-    #[welds(rename = "session_id")]
     #[welds(primary_key)]
+    #[welds(rename = "session_id")]
     pub id: u32,
     pub expires: chrono::DateTime<chrono::Local>,
     pub user_id: u32,
