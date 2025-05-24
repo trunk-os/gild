@@ -3,7 +3,6 @@ use rand::Fill;
 use serde::Deserialize;
 use std::net::SocketAddr;
 
-const DEFAULT_CONFIG_PATH: &str = "/trunk/gild.yaml";
 const DEFAULT_BUCKLE_PATH: &str = "/tmp/buckled.sock";
 const DEFAULT_DB: &str = "/gild.db";
 const DEFAULT_LISTEN: &str = "0.0.0.0:3000";
@@ -26,6 +25,10 @@ fn default_random() -> Vec<u8> {
     v.to_vec()
 }
 
+fn default_origin() -> String {
+    "http://christopher-office:3000".into()
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     #[serde(default = "default_listen")]
@@ -38,16 +41,27 @@ pub struct Config {
     pub signing_key: Vec<u8>,
     #[serde(default = "default_random")]
     pub signing_key_salt: Vec<u8>,
+    #[serde(default = "default_origin")]
+    pub origin: String,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Config::from_file(DEFAULT_CONFIG_PATH.into()).unwrap()
+        let mut this = Self {
+            listen: default_listen(),
+            socket: default_socket(),
+            db: default_db(),
+            signing_key: default_random(),
+            signing_key_salt: default_random(),
+            origin: default_origin(),
+        };
+        this.convert_signing_key().unwrap();
+        this
     }
 }
 
 impl Config {
-    pub(crate) fn from_file(file: std::path::PathBuf) -> Result<Self> {
+    pub fn from_file(file: std::path::PathBuf) -> Result<Self> {
         let file = std::fs::OpenOptions::new().read(true).open(file)?;
         let mut this: Self = serde_yaml_ng::from_reader(file)?;
         this.convert_signing_key()?;

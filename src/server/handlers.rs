@@ -198,3 +198,11 @@ pub(crate) async fn login(
     let jwt = jwt::Token::new(header, claims).sign_with_key(&key)?;
     Ok(CborOut(Token { token: jwt.into() }))
 }
+
+#[axum::debug_handler]
+pub(crate) async fn me(
+    State(_): State<Arc<ServerState>>,
+    Account(user): Account<User>,
+) -> Result<CborOut<User>> {
+    Ok(CborOut(user))
+}
