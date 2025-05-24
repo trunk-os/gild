@@ -51,12 +51,30 @@ pub(crate) async fn zfs_create_dataset(
     Ok(())
 }
 
+pub(crate) async fn zfs_modify_dataset(
+    State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
+    Cbor(dataset): Cbor<buckle::client::ModifyDataset>,
+) -> Result<()> {
+    state.client.zfs().await?.modify_dataset(dataset).await?;
+    Ok(())
+}
+
 pub(crate) async fn zfs_create_volume(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
     Cbor(volume): Cbor<buckle::client::Volume>,
 ) -> Result<()> {
     state.client.zfs().await?.create_volume(volume).await?;
+    Ok(())
+}
+
+pub(crate) async fn zfs_modify_volume(
+    State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
+    Cbor(dataset): Cbor<buckle::client::ModifyVolume>,
+) -> Result<()> {
+    state.client.zfs().await?.modify_volume(dataset).await?;
     Ok(())
 }
 

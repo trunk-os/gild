@@ -53,6 +53,8 @@ impl Server {
                 .route("/zfs/list", post(zfs_list))
                 .route("/zfs/create_volume", post(zfs_create_volume))
                 .route("/zfs/create_dataset", post(zfs_create_dataset))
+                .route("/zfs/modify_dataset", post(zfs_modify_dataset))
+                .route("/zfs/modify_volume", post(zfs_modify_volume))
                 .route("/zfs/destroy", post(zfs_destroy))
                 .route("/users", put(create_user).get(list_users))
                 .route(
