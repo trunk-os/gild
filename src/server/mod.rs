@@ -4,13 +4,14 @@ mod handlers;
 mod tests;
 use self::handlers::*;
 
-use crate::config::Config;
 use crate::db::DB;
+use crate::{config::Config, db::models::AuditLog};
 use anyhow::Result;
 use axum::{
     routing::{delete, get, post, put},
     Router,
 };
+use axum_support::WithLog;
 use buckle::client::{Client, Info};
 use http::{header::*, Method};
 use serde::{Deserialize, Serialize};
@@ -24,6 +25,12 @@ pub struct ServerState {
     client: Client,
     db: DB,
     config: Config,
+}
+
+impl ServerState {
+    pub(crate) fn with_log<T>(&self, resp: axum_support::Result<T>, log: AuditLog) -> WithLog<T> {
+        WithLog(resp, log, self.clone().into())
+    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]

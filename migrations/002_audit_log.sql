@@ -5,7 +5,8 @@ create table audit_log (
   entry varchar not null,
   endpoint varchar not null,
   ip varchar not null,
-  data varchar not null
+  data varchar not null,
+  error varchar
 );
 
 create index audit_log_time_idx on audit_log (time);

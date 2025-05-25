@@ -28,6 +28,7 @@ pub struct AuditLog {
     pub endpoint: String,
     pub ip: String,
     pub data: String,
+    pub error: Option<String>,
 }
 
 impl AuditLog {
@@ -56,6 +57,11 @@ impl AuditLog {
 
     pub fn from_user(&mut self, user: &super::User) -> &mut Self {
         self.user_id = Some(user.id);
+        self
+    }
+
+    pub fn with_error(&mut self, error: &str) -> &mut Self {
+        self.error = Some(error.to_string());
         self
     }
 

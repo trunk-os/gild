@@ -149,3 +149,30 @@ impl FromRequestParts<Arc<ServerState>> for Log {
         Ok(this)
     }
 }
+
+#[derive(Debug, Clone)]
+pub(crate) struct WithLog<T>(
+    pub(crate) Result<T>,
+    pub(crate) AuditLog,
+    pub(crate) Arc<ServerState>,
+);
+
+impl<T> IntoResponse for WithLog<T>
+where
+    T: IntoResponse,
+{
+    fn into_response(self) -> Response {
+        let mut log = self.1;
+        if let Err(ref e) = self.0 {
+            log = log.with_error(&e.0.to_string()).clone();
+        }
+
+        let db = self.2.db.clone();
+
+        tokio::spawn(async move { log.complete(&db).await.unwrap() });
+        match self.0 {
+            Ok(o) => o.into_response(),
+            Err(e) => e.into_response(),
+        }
+    }
+}

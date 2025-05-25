@@ -76,13 +76,13 @@ pub(crate) async fn zfs_create_dataset(
     Account(_): Account<User>,
     Log(mut log): Log,
     Cbor(dataset): Cbor<buckle::client::Dataset>,
-) -> Result<()> {
-    log.with_entry("Creating dataset")
+) -> Result<WithLog<()>> {
+    let log = log
+        .with_entry("Creating dataset")
         .with_data(&dataset)?
-        .complete(&state.db)
-        .await?;
+        .clone();
     state.client.zfs().await?.create_dataset(dataset).await?;
-    Ok(())
+    Ok(state.with_log(Ok(()), log))
 }
 
 pub(crate) async fn zfs_modify_dataset(
@@ -90,13 +90,13 @@ pub(crate) async fn zfs_modify_dataset(
     Account(_): Account<User>,
     Log(mut log): Log,
     Cbor(dataset): Cbor<buckle::client::ModifyDataset>,
-) -> Result<()> {
-    log.with_entry("Modifying dataset")
+) -> Result<WithLog<()>> {
+    let log = log
+        .with_entry("Modifying dataset")
         .with_data(&dataset)?
-        .complete(&state.db)
-        .await?;
+        .clone();
     state.client.zfs().await?.modify_dataset(dataset).await?;
-    Ok(())
+    Ok(state.with_log(Ok(()), log))
 }
 
 pub(crate) async fn zfs_create_volume(
@@ -104,13 +104,13 @@ pub(crate) async fn zfs_create_volume(
     Account(_): Account<User>,
     Log(mut log): Log,
     Cbor(volume): Cbor<buckle::client::Volume>,
-) -> Result<()> {
-    log.with_entry("Creating volume")
+) -> Result<WithLog<()>> {
+    let log = log
+        .with_entry("Creating volume")
         .with_data(&volume)?
-        .complete(&state.db)
-        .await?;
+        .clone();
     state.client.zfs().await?.create_volume(volume).await?;
-    Ok(())
+    Ok(state.with_log(Ok(()), log))
 }
 
 pub(crate) async fn zfs_modify_volume(
@@ -118,13 +118,13 @@ pub(crate) async fn zfs_modify_volume(
     Account(_): Account<User>,
     Log(mut log): Log,
     Cbor(volume): Cbor<buckle::client::ModifyVolume>,
-) -> Result<()> {
-    log.with_entry("Modifying volume")
+) -> Result<WithLog<()>> {
+    let log = log
+        .with_entry("Modifying volume")
         .with_data(&volume)?
-        .complete(&state.db)
-        .await?;
+        .clone();
     state.client.zfs().await?.modify_volume(volume).await?;
-    Ok(())
+    Ok(state.with_log(Ok(()), log))
 }
 
 pub(crate) async fn zfs_destroy(
@@ -132,17 +132,17 @@ pub(crate) async fn zfs_destroy(
     Account(_): Account<User>,
     Log(mut log): Log,
     Cbor(name): Cbor<String>,
-) -> Result<()> {
+) -> Result<WithLog<()>> {
     let mut map: HashMap<&str, &str> = HashMap::default();
     map.insert("name", &name);
 
-    log.with_entry("Destroy volume or dataset")
+    let log = log
+        .with_entry("Destroy volume or dataset")
         .with_data(&map)?
-        .complete(&state.db)
-        .await?;
+        .clone();
 
     state.client.zfs().await?.destroy(name).await?;
-    Ok(())
+    Ok(state.with_log(Ok(()), log))
 }
 
 //
@@ -154,7 +154,7 @@ pub(crate) async fn create_user(
     Account(login): Account<Option<User>>,
     Log(mut log): Log,
     Cbor(user): Cbor<User>,
-) -> Result<CborOut<User>> {
+) -> Result<WithLog<CborOut<User>>> {
     if login.is_none() {
         let count = User::all().count(state.db.handle()).await?;
         if count != 0 {
@@ -179,13 +179,8 @@ pub(crate) async fn create_user(
     user.save(state.db.handle()).await?;
 
     let inner = user.into_inner();
-
-    log.with_entry("Creating user")
-        .with_data(&inner)?
-        .complete(&state.db)
-        .await?;
-
-    Ok(CborOut(inner))
+    let log = log.with_entry("Creating user").with_data(&inner)?.clone();
+    Ok(state.with_log(Ok(CborOut(inner)), log))
 }
 
 pub(crate) async fn remove_user(
@@ -193,14 +188,11 @@ pub(crate) async fn remove_user(
     Account(_): Account<User>,
     Log(mut log): Log,
     Path(id): Path<u32>,
-) -> Result<()> {
+) -> Result<WithLog<()>> {
     if let Some(mut user) = User::find_by_id(state.db.handle(), id).await? {
         let inner = user.clone();
-        log.with_entry("Removing user")
-            .with_data(&inner)?
-            .complete(&state.db)
-            .await?;
-        Ok(user.delete(state.db.handle()).await?)
+        let log = log.with_entry("Removing user").with_data(&inner)?.clone();
+        Ok(state.with_log(Ok(user.delete(state.db.handle()).await?), log))
     } else {
         Err(anyhow!("invalid user").into())
     }
@@ -234,7 +226,7 @@ pub(crate) async fn update_user(
     Account(_): Account<User>,
     Log(mut log): Log,
     Cbor(mut user): Cbor<User>,
-) -> Result<()> {
+) -> Result<WithLog<()>> {
     if User::find_by_id(state.db.handle(), id).await?.is_some() {
         // if we got the record, the id is correct
         user.id = id;
@@ -247,16 +239,13 @@ pub(crate) async fn update_user(
 
         user.plaintext_password = None; // NOTE: so it doesn't appear in the logging that follows
 
-        log.with_entry("Modifying user")
-            .with_data(&user)?
-            .complete(&state.db)
-            .await?;
+        let log = log.with_entry("Modifying user").with_data(&user)?.clone();
 
         // welds doesn't realize the fields have already changed, these two lines force it to see
         // it.
         let mut dbstate: DbState<User> = DbState::db_loaded(user.clone());
         dbstate.replace_inner(user);
-        Ok(dbstate.save(state.db.handle()).await?)
+        Ok(state.with_log(Ok(dbstate.save(state.db.handle()).await?), log))
     } else {
         Err(anyhow!("invalid user").into())
     }
@@ -270,7 +259,7 @@ pub(crate) async fn login(
     State(state): State<Arc<ServerState>>,
     Log(mut log): Log,
     Cbor(form): Cbor<Authentication>,
-) -> Result<CborOut<Token>> {
+) -> Result<WithLog<CborOut<Token>>> {
     form.validate()?;
 
     let users = User::all()
@@ -284,23 +273,23 @@ pub(crate) async fn login(
     let user = match users.first() {
         Some(user) => user.deref(),
         None => {
-            log.with_entry("Unsuccessful login attempt")
+            let log = log
+                .with_entry("Unsuccessful login attempt")
                 .with_data(&map)?
-                .complete(&state.db)
-                .await?;
-            return Err(anyhow!("invalid login").into());
+                .clone();
+            return Ok(state.with_log(Err(anyhow!("invalid login").into()), log));
         }
     };
 
     let log = log.from_user(user);
 
     if user.login(form.password).is_err() {
-        log.with_entry("Unsuccessful login attempt")
+        let log = log
+            .with_entry("Unsuccessful login attempt")
             .with_data(&map)?
-            .complete(&state.db)
-            .await?;
+            .clone();
 
-        return Err(anyhow!("invalid login").into());
+        return Ok(state.with_log(Err(anyhow!("invalid login").into()), log));
     }
 
     let mut session = Session::new_assigned(user);
@@ -314,11 +303,9 @@ pub(crate) async fn login(
     let claims = session.to_jwt();
     let jwt = jwt::Token::new(header, claims).sign_with_key(&key)?;
 
-    log.with_entry("Successfully logged in")
-        .complete(&state.db)
-        .await?;
+    let log = log.with_entry("Successfully logged in").clone();
 
-    Ok(CborOut(Token { token: jwt.into() }))
+    Ok(state.with_log(Ok(CborOut(Token { token: jwt.into() })), log))
 }
 
 pub(crate) async fn me(
