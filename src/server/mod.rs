@@ -27,6 +27,16 @@ pub struct ServerState {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub(crate) struct Pagination {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    since: Option<chrono::DateTime<chrono::Local>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    per_page: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    page: Option<u8>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub(crate) struct PingResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     info: Option<Info>,
@@ -56,6 +66,7 @@ impl Server {
         Ok(Self {
             router: Router::new()
                 .route("/status/ping", get(ping))
+                .route("/status/log", post(log))
                 .route("/zfs/list", post(zfs_list))
                 .route("/zfs/create_volume", post(zfs_create_volume))
                 .route("/zfs/create_dataset", post(zfs_create_dataset))

@@ -1,8 +1,8 @@
-use crate::db::models::{Session, User};
+use crate::db::models::{AuditLog, Session, User};
 use hmac::{Hmac, Mac};
 use jwt::SignWithKey;
 
-use super::{axum_support::*, Authentication, PingResult, ServerState, Token};
+use super::{axum_support::*, Authentication, Pagination, PingResult, ServerState, Token};
 use anyhow::anyhow;
 use axum::extract::{Path, State};
 use axum_serde::Cbor;
@@ -27,6 +27,16 @@ pub(crate) async fn ping(
     } else {
         PingResult::default()
     }))
+}
+
+pub(crate) async fn log(
+    State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
+    Cbor(_): Cbor<Pagination>,
+) -> Result<CborOut<Vec<AuditLog>>> {
+    Ok(CborOut(
+        AuditLog::all().run(state.db.handle()).await?.into_inners(),
+    ))
 }
 
 //
