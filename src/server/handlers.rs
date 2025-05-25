@@ -7,7 +7,7 @@ use anyhow::anyhow;
 use axum::extract::{Path, State};
 use axum_serde::Cbor;
 use buckle::client::ZFSStat;
-use std::{ops::Deref, sync::Arc};
+use std::{collections::HashMap, ops::Deref, sync::Arc};
 use validator::Validate;
 use welds::{exts::VecStateExt, state::DbState};
 
@@ -74,8 +74,13 @@ pub(crate) async fn zfs_list(
 pub(crate) async fn zfs_create_dataset(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
+    Log(mut log): Log,
     Cbor(dataset): Cbor<buckle::client::Dataset>,
 ) -> Result<()> {
+    log.with_entry("Creating dataset")
+        .with_data(&dataset)?
+        .complete(&state.db)
+        .await?;
     state.client.zfs().await?.create_dataset(dataset).await?;
     Ok(())
 }
@@ -83,8 +88,13 @@ pub(crate) async fn zfs_create_dataset(
 pub(crate) async fn zfs_modify_dataset(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
+    Log(mut log): Log,
     Cbor(dataset): Cbor<buckle::client::ModifyDataset>,
 ) -> Result<()> {
+    log.with_entry("Modifying dataset")
+        .with_data(&dataset)?
+        .complete(&state.db)
+        .await?;
     state.client.zfs().await?.modify_dataset(dataset).await?;
     Ok(())
 }
@@ -92,8 +102,13 @@ pub(crate) async fn zfs_modify_dataset(
 pub(crate) async fn zfs_create_volume(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
+    Log(mut log): Log,
     Cbor(volume): Cbor<buckle::client::Volume>,
 ) -> Result<()> {
+    log.with_entry("Creating volume")
+        .with_data(&volume)?
+        .complete(&state.db)
+        .await?;
     state.client.zfs().await?.create_volume(volume).await?;
     Ok(())
 }
@@ -101,17 +116,31 @@ pub(crate) async fn zfs_create_volume(
 pub(crate) async fn zfs_modify_volume(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
-    Cbor(dataset): Cbor<buckle::client::ModifyVolume>,
+    Log(mut log): Log,
+    Cbor(volume): Cbor<buckle::client::ModifyVolume>,
 ) -> Result<()> {
-    state.client.zfs().await?.modify_volume(dataset).await?;
+    log.with_entry("Modifying volume")
+        .with_data(&volume)?
+        .complete(&state.db)
+        .await?;
+    state.client.zfs().await?.modify_volume(volume).await?;
     Ok(())
 }
 
 pub(crate) async fn zfs_destroy(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
+    Log(mut log): Log,
     Cbor(name): Cbor<String>,
 ) -> Result<()> {
+    let mut map: HashMap<&str, &str> = HashMap::default();
+    map.insert("name", &name);
+
+    log.with_entry("Destroy volume or dataset")
+        .with_data(&map)?
+        .complete(&state.db)
+        .await?;
+
     state.client.zfs().await?.destroy(name).await?;
     Ok(())
 }
@@ -123,6 +152,7 @@ pub(crate) async fn zfs_destroy(
 pub(crate) async fn create_user(
     State(state): State<Arc<ServerState>>,
     Account(login): Account<Option<User>>,
+    Log(mut log): Log,
     Cbor(user): Cbor<User>,
 ) -> Result<CborOut<User>> {
     if login.is_none() {
@@ -146,15 +176,29 @@ pub(crate) async fn create_user(
     }
 
     user.save(state.db.handle()).await?;
-    Ok(CborOut(user.into_inner()))
+
+    let inner = user.into_inner();
+
+    log.with_entry("Creating user")
+        .with_data(&inner)?
+        .complete(&state.db)
+        .await?;
+
+    Ok(CborOut(inner))
 }
 
 pub(crate) async fn remove_user(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
+    Log(mut log): Log,
     Path(id): Path<u32>,
 ) -> Result<()> {
     if let Some(mut user) = User::find_by_id(state.db.handle(), id).await? {
+        let inner = user.clone();
+        log.with_entry("Removing user")
+            .with_data(&inner)?
+            .complete(&state.db)
+            .await?;
         Ok(user.delete(state.db.handle()).await?)
     } else {
         Err(anyhow!("invalid user").into())
@@ -187,6 +231,7 @@ pub(crate) async fn update_user(
     State(state): State<Arc<ServerState>>,
     Path(id): Path<u32>,
     Account(_): Account<User>,
+    Log(mut log): Log,
     Cbor(mut user): Cbor<User>,
 ) -> Result<()> {
     if User::find_by_id(state.db.handle(), id).await?.is_some() {
@@ -198,6 +243,13 @@ pub(crate) async fn update_user(
         if let Some(password) = &user.plaintext_password {
             user.set_password(password.clone())?;
         }
+
+        user.plaintext_password = None; // NOTE: so it doesn't appear in the logging that follows
+
+        log.with_entry("Modifying user")
+            .with_data(&user)?
+            .complete(&state.db)
+            .await?;
 
         // welds doesn't realize the fields have already changed, these two lines force it to see
         // it.
