@@ -7,17 +7,20 @@ use self::handlers::*;
 use crate::db::DB;
 use crate::{config::Config, db::models::AuditLog};
 use anyhow::Result;
+use axum::body::Body;
 use axum::{
     routing::{delete, get, post, put},
     Router,
 };
 use axum_support::WithLog;
 use buckle::client::{Client, Info};
-use http::{header::*, Method};
+use http::{header::*, Method, Request};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tower::ServiceBuilder;
+use tower_http::classify::ServerErrorsFailureClass;
 use tower_http::cors::CorsLayer;
+use tracing::{error, info, Span};
 use validator::Validate;
 
 #[derive(Debug, Clone)]
@@ -93,25 +96,52 @@ impl Server {
                     config: config.clone(),
                 }))
                 .layer(
-                    ServiceBuilder::new().layer(
-                        CorsLayer::new()
-                            .allow_methods([
-                                Method::GET,
-                                Method::POST,
-                                Method::DELETE,
-                                Method::PUT,
-                                Method::PATCH,
-                                Method::HEAD,
-                                Method::TRACE,
-                                Method::OPTIONS,
-                            ])
-                            .allow_credentials(true)
-                            .allow_origin(tower_http::cors::AllowOrigin::exact(
-                                HeaderValue::from_str(&config.origin)?,
-                            ))
-                            .allow_headers([CONTENT_TYPE, ACCEPT, AUTHORIZATION])
-                            .allow_private_network(true),
-                    ),
+                    ServiceBuilder::new()
+                        .layer(
+                            // FIXME: definitely doing this wrong
+                            tower_http::trace::TraceLayer::new_for_http()
+                                .make_span_with(|_: &Request<Body>| {
+                                    tracing::info_span!("http-request")
+                                })
+                                .on_request(|req: &Request<Body>, span: &Span| {
+                                    info!(
+                                        "[{}] {} {}",
+                                        span.id()
+                                            .unwrap_or_else(|| tracing::Id::from_u64(1))
+                                            .into_u64(),
+                                        req.method(),
+                                        req.uri().path()
+                                    );
+                                })
+                                .on_failure(|error: ServerErrorsFailureClass, _, span: &Span| {
+                                    error!(
+                                        "[{}] Error on request: {}",
+                                        span.id()
+                                            .unwrap_or_else(|| tracing::Id::from_u64(1))
+                                            .into_u64(),
+                                        error
+                                    )
+                                }),
+                        )
+                        .layer(
+                            CorsLayer::new()
+                                .allow_methods([
+                                    Method::GET,
+                                    Method::POST,
+                                    Method::DELETE,
+                                    Method::PUT,
+                                    Method::PATCH,
+                                    Method::HEAD,
+                                    Method::TRACE,
+                                    Method::OPTIONS,
+                                ])
+                                .allow_credentials(true)
+                                .allow_origin(tower_http::cors::AllowOrigin::exact(
+                                    HeaderValue::from_str(&config.origin)?,
+                                ))
+                                .allow_headers([CONTENT_TYPE, ACCEPT, AUTHORIZATION])
+                                .allow_private_network(true),
+                        ),
                 ),
             config: config.clone(),
         })

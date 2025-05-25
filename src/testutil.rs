@@ -46,6 +46,7 @@ pub async fn make_config(addr: Option<SocketAddr>, poolname: Option<String>) -> 
             Some(buckle::config::Config {
                 socket: buckle::testutil::find_listener()?,
                 zfs: ZFSConfig { pool: poolname },
+                log_level: buckle::config::LogLevel::Error,
             })
         } else {
             None
@@ -55,6 +56,7 @@ pub async fn make_config(addr: Option<SocketAddr>, poolname: Option<String>) -> 
         origin: "http://localhost".into(),
         signing_key: key.to_vec(),
         signing_key_salt: salt.to_vec(),
+        log_level: buckle::config::LogLevel::Error,
     })
 }
 

@@ -2,6 +2,8 @@ use anyhow::{anyhow, Result};
 use rand::Fill;
 use serde::Deserialize;
 use std::net::SocketAddr;
+use tracing::info;
+use tracing_subscriber::FmtSubscriber;
 
 const DEFAULT_BUCKLE_PATH: &str = "/tmp/buckled.sock";
 const DEFAULT_DB: &str = "/gild.db";
@@ -43,6 +45,7 @@ pub struct Config {
     pub signing_key_salt: Vec<u8>,
     #[serde(default = "default_origin")]
     pub origin: String,
+    pub log_level: buckle::config::LogLevel,
 }
 
 impl Default for Config {
@@ -54,16 +57,28 @@ impl Default for Config {
             signing_key: default_random(),
             signing_key_salt: default_random(),
             origin: default_origin(),
+            log_level: buckle::config::LogLevel::Info,
         };
+        this.start_tracing().unwrap();
         this.convert_signing_key().unwrap();
         this
     }
 }
 
 impl Config {
+    fn start_tracing(&self) -> Result<()> {
+        let subscriber = FmtSubscriber::builder()
+            .with_max_level(Into::<tracing::Level>::into(self.log_level.clone()))
+            .finish();
+        tracing::subscriber::set_global_default(subscriber)?;
+        info!("Configuration parsed");
+        Ok(())
+    }
+
     pub fn from_file(file: std::path::PathBuf) -> Result<Self> {
         let file = std::fs::OpenOptions::new().read(true).open(file)?;
         let mut this: Self = serde_yaml_ng::from_reader(file)?;
+        this.start_tracing()?;
         this.convert_signing_key()?;
         Ok(this)
     }

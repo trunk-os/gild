@@ -15,7 +15,7 @@ http = "*"
 tokio = { version = "*", features = [ "full" ] }
 ciborium = "*"
 tower = "*"
-tower-http = { version = "*", features = [ "cors" ] }
+tower-http = { version = "*", features = [ "cors", "trace" ] }
 sqlx = { version = "*", features = [ "runtime-tokio", "sqlite", "uuid", "derive", "macros", "chrono" ] }
 welds = { version = "*", features = [ "sqlite", "check", "detect", "migrations", "unstable-api", "tracing" ] }
 argon2 = "*"
@@ -28,6 +28,8 @@ hmac = "*"
 sha2 = "*"
 jwt = "*"
 problem_details = { version = "*", features = [ "serde", "json", "axum" ] }
+tracing = "*"
+tracing-subscriber = "*"
 
 [dev-dependencies]
 reqwest = { version = "*", features = [ "default", "cookies" ] }
