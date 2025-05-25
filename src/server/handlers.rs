@@ -279,7 +279,12 @@ pub(crate) async fn login(
 
     let user = match users.first() {
         Some(user) => user.deref(),
-        None => return Err(anyhow!("invalid login").into()),
+        None => {
+            log.with_entry("Unsuccessful login attempt")
+                .complete(&state.db)
+                .await?;
+            return Err(anyhow!("invalid login").into());
+        }
     };
 
     let log = log.from_user(user);
