@@ -1,6 +1,6 @@
 create table audit_log (
   id integer primary key autoincrement,
-  user_id integer not null,
+  user_id integer,
   time timestamp not null,
   entry varchar not null,
   endpoint varchar not null,

@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use http::HeaderValue;
+use http::{HeaderMap, HeaderValue, Uri};
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 use welds::{state::DbState, WeldsModel};
@@ -22,7 +22,7 @@ use welds::{state::DbState, WeldsModel};
 pub struct AuditLog {
     #[welds(primary_key)]
     pub id: u32,
-    pub user_id: u32,
+    pub user_id: Option<u32>,
     pub time: chrono::DateTime<chrono::Local>,
     pub entry: String,
     pub endpoint: String,
@@ -35,31 +35,32 @@ impl AuditLog {
         Self::default()
     }
 
-    pub fn from_request<T>(&mut self, request: axum::http::Request<T>) -> &mut Self {
-        self.endpoint = request.uri().to_string();
-        self.ip = request
-            .headers()
+    pub fn from_uri(&mut self, uri: Uri) -> &mut Self {
+        self.endpoint = uri.to_string();
+        self
+    }
+
+    pub fn from_headers(&mut self, headers: HeaderMap<HeaderValue>) -> &mut Self {
+        self.ip = headers
             .get("X-Real-IP")
             .map(|e| e.to_str().unwrap())
             .unwrap_or_else(|| {
-                request
-                    .headers()
+                headers
                     .get("X-Forwarded-For")
                     .map(|e| e.to_str().unwrap().split("; ").next().unwrap_or_default())
                     .unwrap_or_else(|| "")
             })
             .to_string();
-
         self
     }
 
-    pub fn from_user(&mut self, user: super::User) -> &mut Self {
-        self.user_id = user.id;
+    pub fn from_user(&mut self, user: &super::User) -> &mut Self {
+        self.user_id = Some(user.id);
         self
     }
 
-    pub fn with_entry(&mut self, entry: String) -> &mut Self {
-        self.entry = entry;
+    pub fn with_entry(&mut self, entry: &str) -> &mut Self {
+        self.entry = entry.to_string();
         self
     }
 
@@ -71,9 +72,10 @@ impl AuditLog {
         Ok(self)
     }
 
-    pub async fn complete(mut self, db: &super::super::DB) -> Result<()> {
-        self.time = chrono::Local::now();
-        let mut state = DbState::new_uncreated(self);
+    pub async fn complete(&mut self, db: &super::super::DB) -> Result<()> {
+        let mut this = self.clone();
+        this.time = chrono::Local::now();
+        let mut state = DbState::new_uncreated(this);
         Ok(state
             .save(db.handle())
             .await

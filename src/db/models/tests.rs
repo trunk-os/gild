@@ -19,7 +19,7 @@ async fn audit_log() {
         .unwrap();
 
     let mut log = AuditLog {
-        user_id: 1,
+        user_id: Some(1),
         endpoint: "http://localhost".into(),
         ip: "127.0.0.1".into(),
         ..Default::default()
@@ -35,7 +35,7 @@ async fn audit_log() {
         .with_entry("this is a log message".into());
 
     for _ in 0..10 {
-        log.clone().complete(&db).await.unwrap();
+        log.complete(&db).await.unwrap();
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
     }
 

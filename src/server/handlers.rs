@@ -215,6 +215,7 @@ pub(crate) async fn update_user(
 
 pub(crate) async fn login(
     State(state): State<Arc<ServerState>>,
+    Log(mut log): Log,
     Cbor(form): Cbor<Authentication>,
 ) -> Result<CborOut<Token>> {
     form.validate()?;
@@ -229,7 +230,13 @@ pub(crate) async fn login(
         None => return Err(anyhow!("invalid login").into()),
     };
 
+    let log = log.from_user(user);
+
     if user.login(form.password).is_err() {
+        log.with_entry("Unsuccessful login attempt")
+            .complete(&state.db)
+            .await?;
+
         return Err(anyhow!("invalid login").into());
     }
 
@@ -243,6 +250,11 @@ pub(crate) async fn login(
     };
     let claims = session.to_jwt();
     let jwt = jwt::Token::new(header, claims).sign_with_key(&key)?;
+
+    log.with_entry("Successfully logged in")
+        .complete(&state.db)
+        .await?;
+
     Ok(CborOut(Token { token: jwt.into() }))
 }
 

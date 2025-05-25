@@ -10,7 +10,7 @@ use hmac::{Hmac, Mac};
 use jwt::{Header, Token, Verified, VerifyWithKey};
 use problem_details::ProblemDetails;
 
-use crate::db::models::{JWTClaims, Session, User};
+use crate::db::models::{AuditLog, JWTClaims, Session, User};
 
 use super::ServerState;
 
@@ -122,5 +122,30 @@ impl FromRequestParts<Arc<ServerState>> for Account<Option<User>> {
         state: &Arc<ServerState>,
     ) -> core::result::Result<Self, Self::Rejection> {
         Ok(Account(read_jwt(parts, state).await.unwrap_or_default()))
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub(crate) struct Log(pub(crate) AuditLog);
+
+impl FromRequestParts<Arc<ServerState>> for Log {
+    type Rejection = AppError;
+
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &Arc<ServerState>,
+    ) -> core::result::Result<Self, Self::Rejection> {
+        let mut this = Self(
+            AuditLog::builder()
+                .from_uri(parts.uri.clone())
+                .from_headers(parts.headers.clone())
+                .clone(),
+        );
+
+        if let Some(user) = read_jwt(parts, state).await.unwrap_or_default() {
+            this.0 = this.0.from_user(&user).clone();
+        }
+
+        Ok(this)
     }
 }
