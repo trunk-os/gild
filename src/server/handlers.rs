@@ -56,7 +56,7 @@ pub(crate) async fn log(
 //
 // zfs handlers
 //
-//
+
 #[axum::debug_handler]
 pub(crate) async fn zfs_list(
     State(state): State<Arc<ServerState>>,
