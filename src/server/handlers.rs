@@ -57,7 +57,6 @@ pub(crate) async fn log(
 // zfs handlers
 //
 
-#[axum::debug_handler]
 pub(crate) async fn zfs_list(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
@@ -247,7 +246,6 @@ pub(crate) async fn login(
     Ok(CborOut(Token { token: jwt.into() }))
 }
 
-#[axum::debug_handler]
 pub(crate) async fn me(
     State(_): State<Arc<ServerState>>,
     Account(user): Account<User>,
