@@ -1,10 +1,47 @@
 mod service {
-    use crate::testutil::{start_server, TestClient};
+    use buckle::client::Info;
+
+    use crate::{
+        db::models::User,
+        server::{Authentication, PingResult},
+        testutil::{start_server, TestClient},
+    };
 
     #[tokio::test]
     async fn ping() {
-        let client = TestClient::new(start_server(None).await.unwrap());
-        assert!(client.get::<()>("/status/ping").await.is_ok());
+        let mut client = TestClient::new(start_server(None).await.unwrap());
+        let results = client.get::<PingResult>("/status/ping").await.unwrap();
+        assert!(results.info.is_none());
+
+        let login = User {
+            username: "test-login".into(),
+            plaintext_password: Some("test-password".into()),
+            ..Default::default()
+        };
+        assert!(client.put::<User, User>("/users", login).await.is_ok());
+
+        client
+            .login(Authentication {
+                username: "test-login".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap();
+
+        let results = client.get::<PingResult>("/status/ping").await.unwrap();
+        assert!(results.info.is_some());
+        let info: Info = results.info.unwrap().into();
+        assert_ne!(info.uptime, 0);
+        assert_ne!(info.available_memory, 0);
+        assert_ne!(info.total_memory, 0);
+        assert_ne!(info.cpus, 0);
+        assert_ne!(info.cpu_usage, 0.0);
+        assert!(!info.host_name.is_empty());
+        assert!(!info.kernel_version.is_empty());
+        assert_ne!(info.load_average, [0.0, 0.0, 0.0]);
+        assert_ne!(info.processes, 0);
+        assert_eq!(info.total_disk, 0);
+        assert_eq!(info.available_disk, 0);
     }
 }
 

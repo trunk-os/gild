@@ -11,7 +11,7 @@ use axum::{
     routing::{delete, get, post, put},
     Router,
 };
-use buckle::client::Client;
+use buckle::client::{Client, Info};
 use http::{header::*, Method};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -24,6 +24,12 @@ pub struct ServerState {
     client: Client,
     db: DB,
     config: Config,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub(crate) struct PingResult {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    info: Option<Info>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]

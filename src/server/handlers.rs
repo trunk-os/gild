@@ -2,7 +2,7 @@ use crate::db::models::{Session, User};
 use hmac::{Hmac, Mac};
 use jwt::SignWithKey;
 
-use super::{axum_support::*, Authentication, ServerState, Token};
+use super::{axum_support::*, Authentication, PingResult, ServerState, Token};
 use anyhow::anyhow;
 use axum::extract::{Path, State};
 use axum_serde::Cbor;
@@ -17,10 +17,16 @@ use welds::{exts::VecStateExt, state::DbState};
 
 pub(crate) async fn ping(
     State(state): State<Arc<ServerState>>,
-    Account(_): Account<Option<User>>,
-) -> Result<()> {
-    state.client.status().await?.ping().await?;
-    Ok(())
+    Account(user): Account<Option<User>>,
+) -> Result<CborOut<PingResult>> {
+    let result = state.client.status().await?.ping().await?;
+    Ok(CborOut(if user.is_some() {
+        PingResult {
+            info: Some(result.info.unwrap_or_default().into()),
+        }
+    } else {
+        PingResult::default()
+    }))
 }
 
 //
