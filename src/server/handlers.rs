@@ -277,10 +277,14 @@ pub(crate) async fn login(
         .run(state.db.handle())
         .await?;
 
+    let mut map: HashMap<&str, &str> = HashMap::default();
+    map.insert("username", &form.username);
+
     let user = match users.first() {
         Some(user) => user.deref(),
         None => {
             log.with_entry("Unsuccessful login attempt")
+                .with_data(&map)?
                 .complete(&state.db)
                 .await?;
             return Err(anyhow!("invalid login").into());
@@ -291,6 +295,7 @@ pub(crate) async fn login(
 
     if user.login(form.password).is_err() {
         log.with_entry("Unsuccessful login attempt")
+            .with_data(&map)?
             .complete(&state.db)
             .await?;
 
