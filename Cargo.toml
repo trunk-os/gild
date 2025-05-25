@@ -9,6 +9,7 @@ axum = { version = "*", features = [ "tokio", "http1", "http2", "macros" ] }
 axum-serde = { version = "*", features = [ "cbor" ] }
 serde = { version = "*", features = [ "derive" ] }
 serde_yaml_ng = "*"
+serde_json = "*"
 anyhow = "*"
 http = "*"
 tokio = { version = "*", features = [ "full" ] }

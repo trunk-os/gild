@@ -4,9 +4,48 @@ use welds::state::DbState;
 
 use super::User;
 use crate::{
-    db::models::{Session, JWT_EXPIRATION_TIME, JWT_SESSION_ID_KEY},
+    db::models::{AuditLog, Session, JWT_EXPIRATION_TIME, JWT_SESSION_ID_KEY},
+    server::Authentication,
     testutil::*,
 };
+
+#[tokio::test]
+async fn audit_log() {
+    let db = make_config(None, None)
+        .await
+        .unwrap()
+        .get_db()
+        .await
+        .unwrap();
+
+    let mut log = AuditLog {
+        user_id: 1,
+        endpoint: "http://localhost".into(),
+        ip: "127.0.0.1".into(),
+        ..Default::default()
+    };
+
+    let mut log = log
+        // just any struct that can serde should work here
+        .with_data(Authentication {
+            username: "erikh".into(),
+            password: "testinglogs".into(),
+        })
+        .unwrap()
+        .with_entry("this is a log message".into());
+
+    for _ in 0..10 {
+        log.clone().complete(&db).await.unwrap();
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+    }
+
+    let mut time = chrono::Local::now();
+
+    for record in AuditLog::all().run(db.handle()).await.unwrap() {
+        assert_ne!(record.time, time);
+        time = record.time
+    }
+}
 
 #[tokio::test]
 async fn session_jwt() {
