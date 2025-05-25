@@ -32,10 +32,24 @@ pub(crate) async fn ping(
 pub(crate) async fn log(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
-    Cbor(_): Cbor<Pagination>,
+    Cbor(pagination): Cbor<Pagination>,
 ) -> Result<CborOut<Vec<AuditLog>>> {
+    let mut selector = AuditLog::all();
+
+    if let Some(since) = pagination.since {
+        selector = selector.where_col(|c| c.time.gt(since));
+    }
+
+    if let Some(page) = pagination.page {
+        selector = selector
+            .offset(page.into())
+            .limit(pagination.per_page.unwrap_or(20).into());
+    } else if let Some(per_page) = pagination.per_page {
+        selector = selector.limit(per_page.into())
+    }
+
     Ok(CborOut(
-        AuditLog::all().run(state.db.handle()).await?.into_inners(),
+        selector.run(state.db.handle()).await?.into_inners(),
     ))
 }
 
