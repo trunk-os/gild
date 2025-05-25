@@ -170,10 +170,11 @@ pub(crate) async fn create_user(
     // this step)
     if let Some(password) = user.plaintext_password.clone() {
         user.set_password(password)?;
-        user.plaintext_password = None;
     } else {
         return Err(anyhow!("password is required").into());
     }
+
+    user.plaintext_password = None;
 
     user.save(state.db.handle()).await?;
 
@@ -273,7 +274,7 @@ pub(crate) async fn login(
     form.validate()?;
 
     let users = User::all()
-        .where_col(|c| c.username.equal(form.username.clone()))
+        .where_col(|c| c.username.equal(&form.username))
         .run(state.db.handle())
         .await?;
 
