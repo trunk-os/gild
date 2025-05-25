@@ -20,7 +20,8 @@ use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::classify::ServerErrorsFailureClass;
 use tower_http::cors::CorsLayer;
-use tracing::{error, info, Span};
+use tower_http::trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnRequest};
+use tracing::{error, info, Level, Span};
 use validator::Validate;
 
 #[derive(Debug, Clone)]
@@ -98,30 +99,10 @@ impl Server {
                 .layer(
                     ServiceBuilder::new()
                         .layer(
-                            // FIXME: definitely doing this wrong
                             tower_http::trace::TraceLayer::new_for_http()
-                                .make_span_with(|_: &Request<Body>| {
-                                    tracing::info_span!("http-request")
-                                })
-                                .on_request(|req: &Request<Body>, span: &Span| {
-                                    info!(
-                                        "[{}] {} {}",
-                                        span.id()
-                                            .unwrap_or_else(|| tracing::Id::from_u64(1))
-                                            .into_u64(),
-                                        req.method(),
-                                        req.uri().path()
-                                    );
-                                })
-                                .on_failure(|error: ServerErrorsFailureClass, _, span: &Span| {
-                                    error!(
-                                        "[{}] Error on request: {}",
-                                        span.id()
-                                            .unwrap_or_else(|| tracing::Id::from_u64(1))
-                                            .into_u64(),
-                                        error
-                                    )
-                                }),
+                                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                                .on_request(DefaultOnRequest::new().level(Level::INFO))
+                                .on_failure(DefaultOnFailure::new().level(Level::ERROR)),
                         )
                         .layer(
                             CorsLayer::new()
