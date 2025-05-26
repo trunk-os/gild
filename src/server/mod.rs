@@ -17,7 +17,7 @@ use http::{header::*, Method};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tower::ServiceBuilder;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnRequest};
 use tracing::Level;
 use validator::Validate;
@@ -115,9 +115,7 @@ impl Server {
                                     Method::OPTIONS,
                                 ])
                                 .allow_credentials(true)
-                                .allow_origin(tower_http::cors::AllowOrigin::exact(
-                                    HeaderValue::from_str(&config.origin)?,
-                                ))
+                                .allow_origin(Any)
                                 .allow_headers([CONTENT_TYPE, ACCEPT, AUTHORIZATION])
                                 .allow_private_network(true),
                         ),
