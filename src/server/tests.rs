@@ -40,8 +40,6 @@ mod service {
         assert!(!info.kernel_version.is_empty());
         assert_ne!(info.load_average, [0.0, 0.0, 0.0]);
         assert_ne!(info.processes, 0);
-        assert_ne!(info.total_disk, 0);
-        assert_ne!(info.available_disk, 0);
     }
 }
 

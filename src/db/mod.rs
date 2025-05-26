@@ -44,6 +44,10 @@ impl DB {
     }
 
     async fn create(config: Config) -> anyhow::Result<()> {
+        if let Some(parent) = config.db.parent() {
+            std::fs::create_dir_all(&parent)?;
+        }
+
         sqlx::sqlite::CREATE_DB_WAL.store(true, std::sync::atomic::Ordering::Release);
 
         Sqlite::create_database(&format!("sqlite:{}", config.db.to_str().unwrap())).await?;
