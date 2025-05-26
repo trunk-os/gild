@@ -291,7 +291,7 @@ dependencies = [
 [[package]]
 name = "buckle"
 version = "0.1.0"
-source = "git+https://github.com/trunk-os/buckle#26cb42e613d2b23905ed1a238b1685a9fe700ce7"
+source = "git+https://github.com/trunk-os/buckle#68f9e73a89af18564e65733e7815cf81b3d1de50"
 dependencies = [
  "anyhow",
  "clap",
