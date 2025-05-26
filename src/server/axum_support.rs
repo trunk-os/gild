@@ -1,5 +1,5 @@
-use std::sync::Arc;
-
+use super::ServerState;
+use crate::db::models::{AuditLog, JWTClaims, Session, User};
 use anyhow::anyhow;
 use axum::{
     extract::FromRequestParts,
@@ -9,10 +9,8 @@ use axum::{
 use hmac::{Hmac, Mac};
 use jwt::{Header, Token, Verified, VerifyWithKey};
 use problem_details::ProblemDetails;
-
-use crate::db::models::{AuditLog, JWTClaims, Session, User};
-
-use super::ServerState;
+use std::sync::Arc;
+use tracing::error;
 
 pub(crate) type Result<T> = core::result::Result<T, AppError>;
 
@@ -25,6 +23,7 @@ where
 {
     fn from(err: E) -> Self {
         let e: anyhow::Error = err.into();
+        error!("Error in handler: {}", e);
         Self(
             ProblemDetails::new()
                 .with_detail(e.to_string())
@@ -81,21 +80,36 @@ async fn read_jwt(parts: &mut Parts, state: &Arc<ServerState>) -> Result<Option<
     let token = token.to_str()?.strip_prefix("Bearer ").unwrap();
     let signing_key: Hmac<sha2::Sha384> =
         Hmac::new_from_slice(&state.config.signing_key).map_err(|_| err.clone())?;
-    let token: Token<Header, JWTClaims, Verified> = token
-        .verify_with_key(&signing_key)
-        .map_err(|_| err.clone())?;
 
-    let session = Session::from_jwt(&state.db, token.claims().clone())
-        .await
-        .map_err(|_| err.clone())?;
-    // FIXME not sure why relationships are useless here
-    if let Some(user) = User::find_by_id(state.db.handle(), session.user_id)
-        .await
-        .map_err(|_| err.clone())?
-    {
-        Ok(Some(user.into_inner()))
-    } else {
-        Ok(None)
+    let token: Token<Header, JWTClaims, Verified> = match token.verify_with_key(&signing_key) {
+        Ok(x) => x,
+        Err(e) => {
+            error!("Error verifying token: {}", e);
+            return Err(err);
+        }
+    };
+
+    let session = match Session::from_jwt(&state.db, token.claims().clone()).await {
+        Ok(x) => x,
+        Err(e) => {
+            error!("Error locating session from JWT: {}", e);
+            return Err(err);
+        }
+    };
+
+    match User::find_by_id(state.db.handle(), session.user_id).await {
+        Ok(Some(user)) => Ok(Some(user.into_inner())),
+        Ok(None) => {
+            error!(
+                "User authenticated but not found: User ID: {}",
+                session.user_id
+            );
+            Ok(None)
+        }
+        Err(e) => {
+            error!("Error finding user: {}", e);
+            Ok(None)
+        }
     }
 }
 

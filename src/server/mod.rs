@@ -7,21 +7,19 @@ use self::handlers::*;
 use crate::db::DB;
 use crate::{config::Config, db::models::AuditLog};
 use anyhow::Result;
-use axum::body::Body;
 use axum::{
     routing::{delete, get, post, put},
     Router,
 };
 use axum_support::WithLog;
 use buckle::client::{Client, Info};
-use http::{header::*, Method, Request};
+use http::{header::*, Method};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tower::ServiceBuilder;
-use tower_http::classify::ServerErrorsFailureClass;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnRequest};
-use tracing::{error, info, Level, Span};
+use tracing::Level;
 use validator::Validate;
 
 #[derive(Debug, Clone)]
