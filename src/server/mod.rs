@@ -114,7 +114,6 @@ impl Server {
                                     Method::TRACE,
                                     Method::OPTIONS,
                                 ])
-                                .allow_credentials(true)
                                 .allow_origin(Any)
                                 .allow_headers([CONTENT_TYPE, ACCEPT, AUTHORIZATION])
                                 .allow_private_network(true),

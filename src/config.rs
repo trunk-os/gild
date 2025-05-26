@@ -27,10 +27,6 @@ fn default_random() -> Vec<u8> {
     v.to_vec()
 }
 
-fn default_origin() -> String {
-    "http://christopher-office:3000".into()
-}
-
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     #[serde(default = "default_listen")]
@@ -43,8 +39,6 @@ pub struct Config {
     pub signing_key: Vec<u8>,
     #[serde(default = "default_random")]
     pub signing_key_salt: Vec<u8>,
-    #[serde(default = "default_origin")]
-    pub origin: String,
     pub log_level: buckle::config::LogLevel,
 }
 
@@ -56,7 +50,6 @@ impl Default for Config {
             db: default_db(),
             signing_key: default_random(),
             signing_key_salt: default_random(),
-            origin: default_origin(),
             log_level: buckle::config::LogLevel::Info,
         };
         this.start_tracing().unwrap();
