@@ -1,6 +1,6 @@
 mod axum_support;
 mod handlers;
-pub mod input;
+pub mod messages;
 #[cfg(test)]
 mod tests;
 use self::handlers::*;

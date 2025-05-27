@@ -1,6 +1,6 @@
 use crate::{
     config::Config,
-    server::{input::*, Server},
+    server::{messages::*, Server},
 };
 use anyhow::{anyhow, Result};
 use buckle::{config::ZFSConfig, testutil::make_server};

@@ -3,7 +3,7 @@ mod service {
 
     use crate::{
         db::models::User,
-        server::input::*,
+        server::messages::*,
         testutil::{start_server, TestClient},
     };
 
@@ -45,7 +45,7 @@ mod service {
 
 mod user {
     use crate::db::models::User;
-    use crate::server::input::Authentication;
+    use crate::server::messages::Authentication;
     use crate::testutil::{start_server, TestClient};
 
     #[tokio::test]
@@ -414,7 +414,7 @@ mod zfs {
 
     use crate::{
         db::models::User,
-        server::input::Authentication,
+        server::messages::Authentication,
         testutil::{start_server, TestClient},
     };
     use buckle::client::ZFSStat;

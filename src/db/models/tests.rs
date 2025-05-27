@@ -5,7 +5,7 @@ use welds::state::DbState;
 use super::User;
 use crate::{
     db::models::{AuditLog, Session, JWT_EXPIRATION_TIME, JWT_SESSION_ID_KEY},
-    server::input::Authentication,
+    server::messages::Authentication,
     testutil::*,
 };
 
