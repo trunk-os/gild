@@ -52,7 +52,7 @@ impl Server {
                 .route("/zfs/modify_dataset", post(zfs_modify_dataset))
                 .route("/zfs/modify_volume", post(zfs_modify_volume))
                 .route("/zfs/destroy", post(zfs_destroy))
-                .route("/users", put(create_user).get(list_users))
+                .route("/users", put(create_user).post(list_users))
                 .route(
                     "/user/{id}",
                     delete(remove_user).get(get_user).post(update_user),

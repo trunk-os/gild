@@ -52,7 +52,7 @@ mod user {
     async fn login_logout() {
         let mut client = TestClient::new(start_server(None).await.unwrap());
 
-        assert!(client.get::<Vec<User>>("/users").await.is_err());
+        assert!(client.post::<(), Vec<User>>("/users", ()).await.is_err());
 
         let login = User {
             username: "test-login".into(),
@@ -69,7 +69,7 @@ mod user {
             .await
             .unwrap();
 
-        assert!(client.get::<Vec<User>>("/users").await.is_ok());
+        assert!(client.post::<(), Vec<User>>("/users", ()).await.is_ok());
     }
 
     #[tokio::test]
@@ -125,7 +125,7 @@ mod user {
             .await
             .unwrap();
 
-        let list = client.get::<Vec<User>>("/users").await.unwrap();
+        let list = client.post::<(), Vec<User>>("/users", ()).await.unwrap();
         assert_eq!(list.len(), 1);
 
         let table: &[User] = &[
@@ -290,7 +290,7 @@ mod user {
             .await
             .unwrap();
 
-        let list = client.get::<Vec<User>>("/users").await.unwrap();
+        let list = client.post::<(), Vec<User>>("/users", ()).await.unwrap();
         assert_eq!(list.len(), 1);
 
         let table: &[User] = &[
@@ -348,7 +348,7 @@ mod user {
                 .is_err());
         }
 
-        let list = client.get::<Vec<User>>("/users").await.unwrap();
+        let list = client.post::<(), Vec<User>>("/users", ()).await.unwrap();
         assert_eq!(list.len(), table.len() + 1); // add the logged in user
 
         for item in created.iter() {
@@ -384,7 +384,7 @@ mod user {
                 .unwrap();
         }
 
-        let list = client.get::<Vec<User>>("/users").await.unwrap();
+        let list = client.post::<(), Vec<User>>("/users", ()).await.unwrap();
         assert_eq!(list.len(), table.len() + 1);
 
         // check that our accounts actually got deleted

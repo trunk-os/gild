@@ -13,12 +13,6 @@ pub struct Pagination {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
-pub struct PingResult {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub info: Option<Info>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct Token {
     pub(crate) token: String,
 }
@@ -29,4 +23,22 @@ pub struct Authentication {
     pub username: String,
     #[validate(length(min = 8, max = 100))]
     pub password: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct PingResult {
+    pub health: HealthStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub info: Option<Info>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct HealthStatus {
+    pub buckle: Health,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct Health {
+    pub error: Option<String>,
+    pub latency: Option<u64>,
 }

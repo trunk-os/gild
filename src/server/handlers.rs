@@ -19,10 +19,26 @@ pub(crate) async fn ping(
     State(state): State<Arc<ServerState>>,
     Account(user): Account<Option<User>>,
 ) -> Result<CborOut<PingResult>> {
-    let result = state.client.status().await?.ping().await?;
     Ok(CborOut(if user.is_some() {
+        let start = std::time::Instant::now();
+        let result = state.client.status().await?.ping().await;
+
+        let mut error = None;
+        let mut info = None;
+
+        match result {
+            Ok(result) => info = Some(result.info.unwrap_or_default().into()),
+            Err(e) => error = Some(e.to_string()),
+        }
+
         PingResult {
-            info: Some(result.info.unwrap_or_default().into()),
+            health: HealthStatus {
+                buckle: Health {
+                    latency: Some((std::time::Instant::now() - start).as_millis() as u64),
+                    error,
+                },
+            },
+            info,
         }
     } else {
         PingResult::default()
