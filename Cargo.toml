@@ -15,6 +15,7 @@ http = "*"
 tokio = { version = "*", features = [ "full" ] }
 ciborium = "*"
 tower = "*"
+tonic = "*"
 tower-http = { version = "*", features = [ "cors", "trace" ] }
 sqlx = { version = "*", features = [ "runtime-tokio", "sqlite", "uuid", "derive", "macros", "chrono" ] }
 welds = { version = "*", features = [ "sqlite", "check", "detect", "migrations", "unstable-api", "tracing" ] }

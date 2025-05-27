@@ -9,26 +9,46 @@ use axum::{
 use hmac::{Hmac, Mac};
 use jwt::{Header, Token, Verified, VerifyWithKey};
 use problem_details::ProblemDetails;
-use std::sync::Arc;
+use std::{
+    any::{Any, TypeId},
+    sync::Arc,
+};
 use tracing::error;
 
 pub(crate) type Result<T> = core::result::Result<T, AppError>;
 
 #[derive(Debug, Clone, Default)]
-pub(crate) struct AppError(ProblemDetails);
+pub(crate) struct AppError(pub ProblemDetails);
 
 impl<E> From<E> for AppError
 where
-    E: Into<anyhow::Error>,
+    E: Into<anyhow::Error> + Any,
 {
-    fn from(err: E) -> Self {
-        let e: anyhow::Error = err.into();
-        error!("Error in handler: {}", e);
-        Self(
-            ProblemDetails::new()
-                .with_detail(e.to_string())
-                .with_title("Uncategorized Error"),
-        )
+    fn from(value: E) -> Self {
+        // hack around type specialization
+        if TypeId::of::<E>() == TypeId::of::<ProblemDetails>() {
+            Self(
+                <(dyn Any + 'static)>::downcast_ref::<ProblemDetails>(&value)
+                    .unwrap()
+                    .clone(),
+            )
+        } else if TypeId::of::<E>() == TypeId::of::<tonic::Status>() {
+            Self(
+                ProblemDetails::new()
+                    .with_detail(
+                        <(dyn Any + 'static)>::downcast_ref::<tonic::Status>(&value)
+                            .unwrap()
+                            .message(),
+                    )
+                    .with_title("Uncategorized Error"),
+            )
+        } else {
+            Self(
+                ProblemDetails::new()
+                    .with_detail(value.into().to_string())
+                    .with_title("Uncategorized Error"),
+            )
+        }
     }
 }
 
@@ -77,7 +97,11 @@ async fn read_jwt(parts: &mut Parts, state: &Arc<ServerState>) -> Result<Option<
         .get(http::header::AUTHORIZATION)
         .ok_or(err.clone())?;
 
-    let token = token.to_str()?.strip_prefix("Bearer ").unwrap();
+    let token = token
+        .to_str()
+        .map_err(|_| err.clone())?
+        .strip_prefix("Bearer ")
+        .unwrap();
     let signing_key: Hmac<sha2::Sha384> =
         Hmac::new_from_slice(&state.config.signing_key).map_err(|_| err.clone())?;
 

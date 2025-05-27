@@ -391,12 +391,61 @@ mod user {
 
 #[cfg(feature = "zfs")]
 mod zfs {
+    use std::collections::HashMap;
+
     use crate::{
         db::models::User,
         server::Authentication,
         testutil::{start_server, TestClient},
     };
     use buckle::client::ZFSStat;
+
+    #[tokio::test]
+    async fn zfs_errors() {
+        let _ = buckle::testutil::destroy_zpool("errors", None);
+        let zpool = buckle::testutil::create_zpool("errors").unwrap();
+        let mut client =
+            TestClient::new(start_server(Some("buckle-test-gild".into())).await.unwrap());
+
+        let login = User {
+            username: "test-login".into(),
+            plaintext_password: Some("test-password".into()),
+            ..Default::default()
+        };
+        assert!(client.put::<User, User>("/users", login).await.is_ok());
+
+        client
+            .login(Authentication {
+                username: "test-login".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap();
+
+        let res = client
+            .post::<_, ()>(
+                "/zfs/modify_volume",
+                buckle::client::ModifyVolume {
+                    name: "volume".into(),
+                    modifications: buckle::client::Volume {
+                        name: "volume2".into(),
+                        size: 100000 * 1024 * 1024,
+                    },
+                },
+            )
+            .await;
+
+        let err = res.err().unwrap().to_string();
+
+        let map: HashMap<String, String> = serde_json::from_str(&err).unwrap();
+
+        assert_eq!(
+            map.get("detail").unwrap().to_string(),
+            "Error: cannot open 'buckle-test-gild/volume': dataset does not exist".to_string()
+        );
+
+        buckle::testutil::destroy_zpool("errors", Some(&zpool)).unwrap();
+    }
 
     #[tokio::test]
     async fn zfs_basic() {

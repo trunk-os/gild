@@ -291,7 +291,7 @@ dependencies = [
 [[package]]
 name = "buckle"
 version = "0.1.0"
-source = "git+https://github.com/trunk-os/buckle#68f9e73a89af18564e65733e7815cf81b3d1de50"
+source = "git+https://github.com/trunk-os/buckle#921b0cf2cd04df42778ad93e6b91981dc4302375"
 dependencies = [
  "anyhow",
  "clap",
@@ -919,6 +919,7 @@ dependencies = [
  "sqlx",
  "tempfile",
  "tokio",
+ "tonic",
  "tower 0.5.2",
  "tower-http",
  "tracing",
@@ -2390,9 +2391,9 @@ dependencies = [
 
 [[package]]
 name = "socket2"
-version = "0.5.9"
+version = "0.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f5fd57c80058a56cf5c777ab8a126398ece8e442983605d280a44ce79d0edef"
+checksum = "e22376abed350d73dd1cd119b57ffccad95b4e585a7cda43e286245ce23c0678"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
