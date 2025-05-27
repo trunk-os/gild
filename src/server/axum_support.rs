@@ -144,6 +144,7 @@ impl FromRequestParts<Arc<ServerState>> for Account<User> {
         parts: &mut Parts,
         state: &Arc<ServerState>,
     ) -> core::result::Result<Self, Self::Rejection> {
+        Session::prune(&state.db).await?; // prune sessions before trying to read them
         if let Some(user) = read_jwt(parts, state).await? {
             Ok(Account(user))
         } else {

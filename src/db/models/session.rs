@@ -32,16 +32,28 @@ pub(crate) type JWTClaims = BTreeMap<String, String>;
 
 pub(crate) const JWT_SESSION_ID_KEY: &str = "kid";
 pub(crate) const JWT_EXPIRATION_TIME: &str = "exp";
+pub(crate) const DEFAULT_EXPIRATION: i64 = 7;
 
 impl Session {
     pub fn new_assigned(user: &User) -> DbState<Self> {
         DbState::new_uncreated(Self {
             user_id: user.id,
             expires: chrono::Local::now()
-                .checked_add_signed(chrono::TimeDelta::days(7))
+                .checked_add_signed(chrono::TimeDelta::days(DEFAULT_EXPIRATION))
                 .unwrap(),
             ..Default::default()
         })
+    }
+
+    pub async fn prune(db: &DB) -> Result<()> {
+        Self::all()
+            .where_col(|c| {
+                c.expires
+                    .lt(chrono::Local::now() - chrono::Duration::days(DEFAULT_EXPIRATION))
+            })
+            .delete(db.handle())
+            .await?;
+        Ok(())
     }
 
     pub(crate) async fn from_jwt(db: &DB, claims: JWTClaims) -> Result<DbState<Self>> {
