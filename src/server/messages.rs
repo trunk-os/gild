@@ -39,6 +39,8 @@ pub struct HealthStatus {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Health {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub latency: Option<u64>,
 }
