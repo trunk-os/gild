@@ -122,7 +122,14 @@ async fn read_jwt(parts: &mut Parts, state: &Arc<ServerState>) -> Result<Option<
     };
 
     match User::find_by_id(state.db.handle(), session.user_id).await {
-        Ok(Some(user)) => Ok(Some(user.into_inner())),
+        Ok(Some(user)) => {
+            if user.deleted_at.is_none() {
+                Ok(Some(user.into_inner()))
+            } else {
+                error!("User was deleted at {}", user.deleted_at.unwrap());
+                Ok(None)
+            }
+        }
         Ok(None) => {
             error!(
                 "User authenticated but not found: User ID: {}",
