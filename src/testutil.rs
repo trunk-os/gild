@@ -11,10 +11,7 @@ use serde::{
     de::{Deserialize, DeserializeOwned},
     Serialize,
 };
-use std::{
-    net::{IpAddr, Ipv4Addr, SocketAddr},
-    sync::Arc,
-};
+use std::{net::SocketAddr, sync::Arc};
 use tempfile::NamedTempFile;
 
 pub async fn find_listener() -> Result<SocketAddr> {
@@ -40,7 +37,7 @@ pub async fn make_config(addr: Option<SocketAddr>, poolname: Option<String>) -> 
         listen: if let Some(addr) = addr {
             addr
         } else {
-            SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 0)
+            find_listener().await?
         },
         socket: make_server(if let Some(poolname) = poolname {
             Some(buckle::config::Config {
@@ -68,7 +65,7 @@ pub async fn start_server(poolname: Option<String>) -> Result<SocketAddr> {
         Server::new(config).await.unwrap().start().await.unwrap();
     };
     tokio::spawn(call);
-    tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
     Ok(ret)
 }
 
