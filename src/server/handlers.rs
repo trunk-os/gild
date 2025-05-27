@@ -204,10 +204,25 @@ pub(crate) async fn remove_user(
 pub(crate) async fn list_users(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
+    Cbor(pagination): Cbor<Option<Pagination>>,
 ) -> Result<CborOut<Vec<User>>> {
-    Ok(CborOut(
-        User::all().run(state.db.handle()).await?.into_inners(),
-    ))
+    if let Some(pagination) = pagination {
+        let mut query = User::all();
+
+        if let Some(per_page) = pagination.per_page {
+            query = query.limit(per_page.into());
+        }
+
+        if let Some(page) = pagination.page {
+            query = query.offset((page * pagination.per_page.unwrap_or(20)).into());
+        }
+
+        Ok(CborOut(query.run(state.db.handle()).await?.into_inners()))
+    } else {
+        Ok(CborOut(
+            User::all().run(state.db.handle()).await?.into_inners(),
+        ))
+    }
 }
 
 pub(crate) async fn get_user(
