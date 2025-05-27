@@ -156,8 +156,7 @@ pub(crate) async fn create_user(
     Cbor(user): Cbor<User>,
 ) -> Result<WithLog<CborOut<User>>> {
     if login.is_none() {
-        let count = User::all().count(state.db.handle()).await?;
-        if count != 0 {
+        if !User::first_time_setup(&state.db).await? {
             return Err(anyhow!("invalid login").into());
         }
     }
@@ -189,10 +188,14 @@ pub(crate) async fn remove_user(
     Log(mut log): Log,
     Path(id): Path<u32>,
 ) -> Result<WithLog<()>> {
-    if let Some(mut user) = User::find_by_id(state.db.handle(), id).await? {
-        let inner = user.clone();
-        let log = log.with_entry("Removing user").with_data(&inner)?.clone();
-        Ok(state.with_log(Ok(user.delete(state.db.handle()).await?), log))
+    if let Some(user) = &mut User::find_by_id(state.db.handle(), id).await? {
+        user.deleted_at = Some(chrono::Local::now());
+        let log = log
+            .with_entry("Removing user")
+            .with_data(&user.clone())?
+            .clone();
+        user.save(state.db.handle()).await?;
+        Ok(state.with_log(Ok(()), log))
     } else {
         Err(anyhow!("invalid user").into())
     }

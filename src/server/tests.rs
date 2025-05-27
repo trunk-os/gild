@@ -385,7 +385,17 @@ mod user {
         }
 
         let list = client.get::<Vec<User>>("/users").await.unwrap();
-        assert_eq!(list.len(), 1);
+        assert_eq!(list.len(), 6);
+
+        // check that our accounts actually got deleted
+        let mut count = 0;
+        for item in list {
+            if item.deleted_at.is_none() {
+                count += 1;
+            }
+        }
+
+        assert_eq!(count, 1);
     }
 }
 

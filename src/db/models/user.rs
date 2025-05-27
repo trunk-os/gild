@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use validator::Validate;
 use welds::WeldsModel;
 
+use crate::db::DB;
+
 #[derive(
     Debug,
     Clone,
@@ -44,6 +46,8 @@ pub(crate) struct User {
     #[validate(length(min = 10, max = 20))]
     pub phone: Option<String>,
 
+    pub deleted_at: Option<chrono::DateTime<chrono::Local>>,
+
     #[welds(ignore)]
     // this should really skip totally, but is
     // needed for tests.
@@ -73,5 +77,13 @@ impl User {
             .map_err(|e| anyhow!(e.to_string()))?
             .to_string();
         Ok(())
+    }
+
+    pub async fn first_time_setup(db: &DB) -> Result<bool> {
+        let count = User::all()
+            .where_col(|c| c.deleted_at.equal(None))
+            .count(db.handle())
+            .await?;
+        Ok(count == 0)
     }
 }

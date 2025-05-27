@@ -122,6 +122,7 @@ async fn user_basic() {
             phone: Some("800-867-5309".into()),
             password: "".into(),
             plaintext_password: Some("horlclax".into()),
+            deleted_at: None,
         }),
         DbState::new_uncreated(User {
             id: 0,
@@ -131,6 +132,7 @@ async fn user_basic() {
             phone: None,
             password: "".into(),
             plaintext_password: Some("foobar".into()),
+            deleted_at: None,
         }),
         DbState::new_uncreated(User {
             id: 0,
@@ -140,6 +142,7 @@ async fn user_basic() {
             phone: None,
             password: "".into(),
             plaintext_password: Some("pooprocket".into()),
+            deleted_at: None,
         }),
         DbState::new_uncreated(User {
             id: 0,
@@ -149,6 +152,7 @@ async fn user_basic() {
             phone: None,
             password: "".into(),
             plaintext_password: Some("mmph".into()),
+            deleted_at: None,
         }),
         DbState::new_uncreated(User {
             id: 0,
@@ -158,6 +162,7 @@ async fn user_basic() {
             phone: None,
             password: "".into(),
             plaintext_password: Some("meh".into()),
+            deleted_at: None,
         }),
     ];
 
