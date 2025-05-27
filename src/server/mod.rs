@@ -1,5 +1,6 @@
 mod axum_support;
 mod handlers;
+pub mod input;
 #[cfg(test)]
 mod tests;
 use self::handlers::*;
@@ -12,15 +13,13 @@ use axum::{
     Router,
 };
 use axum_support::WithLog;
-use buckle::client::{Client, Info};
+use buckle::client::Client;
 use http::{header::*, Method};
-use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnRequest};
 use tracing::Level;
-use validator::Validate;
 
 #[derive(Debug, Clone)]
 pub struct ServerState {
@@ -33,35 +32,6 @@ impl ServerState {
     pub(crate) fn with_log<T>(&self, resp: axum_support::Result<T>, log: AuditLog) -> WithLog<T> {
         WithLog(resp, log, self.clone().into())
     }
-}
-
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
-pub(crate) struct Pagination {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    since: Option<chrono::DateTime<chrono::Local>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    per_page: Option<u8>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    page: Option<u8>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
-pub(crate) struct PingResult {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    info: Option<Info>,
-}
-
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
-pub(crate) struct Token {
-    pub(crate) token: String,
-}
-
-#[derive(Debug, Clone, Default, Validate, Serialize, Deserialize)]
-pub struct Authentication {
-    #[validate(length(min = 3, max = 30))]
-    pub username: String,
-    #[validate(length(min = 8, max = 100))]
-    pub password: String,
 }
 
 #[derive(Debug, Clone)]

@@ -3,7 +3,7 @@ mod service {
 
     use crate::{
         db::models::User,
-        server::{Authentication, PingResult},
+        server::input::*,
         testutil::{start_server, TestClient},
     };
 
@@ -45,7 +45,7 @@ mod service {
 
 mod user {
     use crate::db::models::User;
-    use crate::server::Authentication;
+    use crate::server::input::Authentication;
     use crate::testutil::{start_server, TestClient};
 
     #[tokio::test]
@@ -385,7 +385,7 @@ mod user {
         }
 
         let list = client.get::<Vec<User>>("/users").await.unwrap();
-        assert_eq!(list.len(), 6);
+        assert_eq!(list.len(), table.len() + 1);
 
         // check that our accounts actually got deleted
         let mut count = 0;
@@ -414,7 +414,7 @@ mod zfs {
 
     use crate::{
         db::models::User,
-        server::Authentication,
+        server::input::Authentication,
         testutil::{start_server, TestClient},
     };
     use buckle::client::ZFSStat;
