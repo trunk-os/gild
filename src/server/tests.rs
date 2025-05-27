@@ -396,6 +396,15 @@ mod user {
         }
 
         assert_eq!(count, 1);
+
+        // test deleted user unable to login
+        assert!(client
+            .login(Authentication {
+                username: "erikh".into(),
+                password: "horlclax".into(),
+            })
+            .await
+            .is_err());
     }
 }
 
