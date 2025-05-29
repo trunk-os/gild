@@ -62,6 +62,10 @@ pub(crate) struct User {
 
 impl User {
     pub(crate) fn login(&self, password: String) -> Result<()> {
+        if self.deleted_at.is_some() {
+            return Err(anyhow!("invalid login"));
+        }
+
         let crypt = Argon2::default();
         let parsed = PasswordHash::new(&self.password).map_err(|e| anyhow!(e.to_string()))?;
         crypt

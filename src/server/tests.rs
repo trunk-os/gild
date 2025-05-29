@@ -92,6 +92,14 @@ mod user {
 
         client
             .login(Authentication {
+                username: "test-login2".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap_err();
+
+        client
+            .login(Authentication {
                 username: "test-login".into(),
                 password: "test-password".into(),
             })
@@ -104,6 +112,14 @@ mod user {
             ..Default::default()
         };
         assert!(client.put::<User, User>("/users", login).await.is_ok());
+
+        client
+            .login(Authentication {
+                username: "test-login2".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
