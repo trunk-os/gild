@@ -27,7 +27,8 @@ pub struct Authentication {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PingResult {
-    pub health: HealthStatus,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub health: Option<HealthStatus>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub info: Option<Info>,
 }

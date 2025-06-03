@@ -32,12 +32,12 @@ pub(crate) async fn ping(
         }
 
         PingResult {
-            health: HealthStatus {
+            health: Some(HealthStatus {
                 buckle: Health {
                     latency: Some((std::time::Instant::now() - start).as_millis() as u64),
                     error,
                 },
-            },
+            }),
             info,
         }
     } else {
