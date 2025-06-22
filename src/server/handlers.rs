@@ -354,18 +354,17 @@ pub(crate) async fn me(
 //
 
 pub(crate) async fn list_units(
-    State(_state): State<Arc<ServerState>>,
+    State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
-    Log(mut _log): Log,
-) -> Result<CborOut<Vec<buckle::systemd::Unit>>> {
-    Ok(CborOut(Vec::new()))
+) -> Result<CborOut<Vec<buckle::systemd::UnitSettings>>> {
+    Ok(CborOut(state.client.systemd().await?.list().await?))
 }
 
 pub(crate) async fn set_unit(
-    State(_state): State<Arc<ServerState>>,
+    State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
-    Log(mut _log): Log,
-    Cbor(_settings): Cbor<buckle::systemd::UnitSettings>,
+    Cbor(settings): Cbor<buckle::systemd::UnitSettings>,
 ) -> Result<CborOut<()>> {
+    state.client.systemd().await?.set_unit(settings).await?;
     Ok(CborOut(()))
 }
