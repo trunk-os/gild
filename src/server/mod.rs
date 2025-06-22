@@ -3,8 +3,8 @@ mod handlers;
 pub mod messages;
 #[cfg(test)]
 mod tests;
-use self::handlers::*;
 
+use self::handlers::*;
 use crate::db::DB;
 use crate::{config::Config, db::models::AuditLog};
 use anyhow::Result;
