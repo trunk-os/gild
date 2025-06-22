@@ -162,7 +162,7 @@ pub(crate) async fn zfs_destroy(
 }
 
 //
-// Auth handlers
+// User accounts
 //
 
 pub(crate) async fn create_user(
@@ -347,4 +347,24 @@ pub(crate) async fn me(
     Account(user): Account<User>,
 ) -> Result<CborOut<User>> {
     Ok(CborOut(user))
+}
+
+//
+// Systemd Controls
+//
+
+pub(crate) async fn list_units(
+    State(_state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
+    Log(mut _log): Log,
+) -> Result<CborOut<()>> {
+    Ok(CborOut(()))
+}
+
+pub(crate) async fn set_unit(
+    State(_state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
+    Log(mut _log): Log,
+) -> Result<CborOut<()>> {
+    Ok(CborOut(()))
 }

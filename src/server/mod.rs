@@ -44,6 +44,8 @@ impl Server {
     pub async fn new(config: Config) -> Result<Self> {
         Ok(Self {
             router: Router::new()
+                .route("/systemd/list", get(list_units))
+                .route("/systemd/set_unit", post(set_unit))
                 .route("/status/ping", get(ping))
                 .route("/status/log", post(log))
                 .route("/zfs/list", post(zfs_list))
