@@ -357,14 +357,15 @@ pub(crate) async fn list_units(
     State(_state): State<Arc<ServerState>>,
     Account(_): Account<User>,
     Log(mut _log): Log,
-) -> Result<CborOut<()>> {
-    Ok(CborOut(()))
+) -> Result<CborOut<Vec<buckle::systemd::Unit>>> {
+    Ok(CborOut(Vec::new()))
 }
 
 pub(crate) async fn set_unit(
     State(_state): State<Arc<ServerState>>,
     Account(_): Account<User>,
     Log(mut _log): Log,
+    Cbor(_settings): Cbor<buckle::systemd::UnitSettings>,
 ) -> Result<CborOut<()>> {
     Ok(CborOut(()))
 }
