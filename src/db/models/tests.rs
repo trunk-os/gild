@@ -25,7 +25,7 @@ async fn audit_log() {
         ..Default::default()
     };
 
-    let mut log = log
+    let log = log
         // just any struct that can serde should work here
         .with_data(Authentication {
             username: "erikh".into(),

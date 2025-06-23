@@ -381,3 +381,22 @@ pub(crate) async fn set_unit(
     state.buckle.systemd().await?.set_unit(settings).await?;
     Ok(CborOut(()))
 }
+
+//
+// Package handlers
+//
+
+pub(crate) async fn get_prompts(
+    State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
+    Cbor(pkg): Cbor<charon::PackageTitle>,
+) -> Result<CborOut<charon::PromptCollection>> {
+    Ok(CborOut(
+        state
+            .charon
+            .query()
+            .await?
+            .get_prompts(&pkg.name, &pkg.version)
+            .await?,
+    ))
+}
