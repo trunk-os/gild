@@ -25,7 +25,6 @@ use tracing::Level;
 #[derive(Debug, Clone)]
 pub struct ServerState {
     buckle: BuckleClient,
-    #[allow(unused)]
     charon: CharonClient,
     db: DB,
     config: Config,
@@ -47,6 +46,9 @@ impl Server {
     pub async fn new(config: Config) -> Result<Self> {
         Ok(Self {
             router: Router::new()
+                //.route("/packages/install", post(install_package))
+                //.route("/packages/prompts", get(get_prompts))
+                //.route("/packages/set_responses", post(set_responses))
                 .route("/systemd/list", get(list_units))
                 .route("/systemd/set_unit", post(set_unit))
                 .route("/status/ping", get(ping))

@@ -1,4 +1,3 @@
-#![allow(dead_code, unused)]
 mod log;
 mod session;
 #[cfg(test)]
