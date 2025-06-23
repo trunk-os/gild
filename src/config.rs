@@ -124,7 +124,6 @@ impl Config {
         buckle::client::Client::new(self.sockets.buckle.clone())
     }
 
-    #[allow(unused)]
     pub(crate) fn charon(&self) -> Result<charon::Client> {
         charon::Client::new(self.sockets.charon.clone())
     }

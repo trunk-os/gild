@@ -14,6 +14,7 @@ use axum::{
 };
 use axum_support::WithLog;
 use buckle::client::Client as BuckleClient;
+use charon::Client as CharonClient;
 use http::{header::*, Method};
 use std::sync::Arc;
 use tower::ServiceBuilder;
@@ -24,6 +25,8 @@ use tracing::Level;
 #[derive(Debug, Clone)]
 pub struct ServerState {
     buckle: BuckleClient,
+    #[allow(unused)]
+    charon: CharonClient,
     db: DB,
     config: Config,
 }
@@ -63,6 +66,7 @@ impl Server {
                 .route("/session/me", get(me))
                 .with_state(Arc::new(ServerState {
                     buckle: config.buckle()?,
+                    charon: config.charon()?,
                     db: config.get_db().await?,
                     config: config.clone(),
                 }))
