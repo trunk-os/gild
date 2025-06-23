@@ -1,5 +1,7 @@
 mod packages {
-    use charon::{InputType, PackageTitle, Prompt, PromptCollection};
+    use charon::{
+        Input, InputType, PackageTitle, Prompt, PromptCollection, PromptResponse, PromptResponses,
+    };
 
     use crate::{
         db::models::User,
@@ -68,6 +70,63 @@ mod packages {
                 },
             ])
         )
+    }
+
+    #[tokio::test]
+    async fn set_responses() {
+        let responses = PromptResponses(vec![
+            PromptResponse {
+                input: Input::String("/tmp/volroot".into()),
+                template: "private_path".into(),
+            },
+            PromptResponse {
+                input: Input::Integer(8675309),
+                template: "private_size".into(),
+            },
+            PromptResponse {
+                input: Input::Boolean(false),
+                template: "private_recreate".into(),
+            },
+        ]);
+
+        let mut client = TestClient::new(start_server(None).await.unwrap());
+
+        let login = User {
+            username: "test-login".into(),
+            plaintext_password: Some("test-password".into()),
+            ..Default::default()
+        };
+        assert!(client.put::<User, User>("/users", login).await.is_ok());
+
+        assert!(client
+            .post::<PromptResponsesWithName, ()>(
+                "/packages/set_responses",
+                PromptResponsesWithName {
+                    name: "with-prompts".into(),
+                    responses: responses.clone(),
+                }
+            )
+            .await
+            .is_err());
+
+        client
+            .login(Authentication {
+                username: "test-login".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap();
+
+        assert!(client
+            .post::<PromptResponsesWithName, ()>(
+                "/packages/set_responses",
+                PromptResponsesWithName {
+                    name: "with-prompts".into(),
+                    responses: responses.clone(),
+                }
+            )
+            .await
+            .is_ok());
     }
 }
 
