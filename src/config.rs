@@ -6,7 +6,6 @@ use tracing::info;
 use tracing_subscriber::FmtSubscriber;
 
 const DEFAULT_BUCKLE_PATH: &str = "/tmp/buckled.sock";
-#[allow(unused)]
 const DEFAULT_CHARON_PATH: &str = "/tmp/charond.sock";
 const DEFAULT_DB: &str = "/gild.db";
 const DEFAULT_LISTEN: &str = "0.0.0.0:3000";
@@ -17,6 +16,10 @@ fn default_db() -> std::path::PathBuf {
 
 fn default_buckle_socket() -> std::path::PathBuf {
     DEFAULT_BUCKLE_PATH.into()
+}
+
+fn default_charon_socket() -> std::path::PathBuf {
+    DEFAULT_CHARON_PATH.into()
 }
 
 fn default_listen() -> SocketAddr {
@@ -30,11 +33,28 @@ fn default_random() -> Vec<u8> {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct SocketConfig {
+    #[serde(default = "default_buckle_socket")]
+    pub buckle: std::path::PathBuf,
+    #[serde(default = "default_charon_socket")]
+    #[allow(unused)]
+    pub charon: std::path::PathBuf,
+}
+
+impl Default for SocketConfig {
+    fn default() -> Self {
+        Self {
+            buckle: default_buckle_socket(),
+            charon: default_charon_socket(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     #[serde(default = "default_listen")]
     pub listen: SocketAddr,
-    #[serde(default = "default_buckle_socket")]
-    pub socket: std::path::PathBuf,
+    pub sockets: SocketConfig,
     #[serde(default = "default_db")]
     pub db: std::path::PathBuf,
     #[serde(default = "default_random")]
@@ -48,7 +68,7 @@ impl Default for Config {
     fn default() -> Self {
         let mut this = Self {
             listen: default_listen(),
-            socket: default_buckle_socket(),
+            sockets: Default::default(),
             db: default_db(),
             signing_key: default_random(),
             signing_key_salt: default_random(),
@@ -102,6 +122,6 @@ impl Config {
     }
 
     pub(crate) fn get_client(&self) -> Result<buckle::client::Client> {
-        buckle::client::Client::new(self.socket.clone())
+        buckle::client::Client::new(self.sockets.buckle.clone())
     }
 }

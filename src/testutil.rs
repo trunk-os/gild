@@ -1,5 +1,5 @@
 use crate::{
-    config::Config,
+    config::{Config, SocketConfig},
     server::{messages::*, Server},
 };
 use anyhow::{anyhow, Result};
@@ -42,16 +42,20 @@ pub async fn make_config(addr: Option<SocketAddr>, poolname: Option<String>) -> 
         } else {
             find_listener().await?
         },
-        socket: make_server(if let Some(poolname) = poolname {
-            Some(buckle::config::Config {
-                socket: buckle::testutil::find_listener()?,
-                zfs: ZFSConfig { pool: poolname },
-                log_level: buckle::config::LogLevel::Error,
+        sockets: SocketConfig {
+            buckle: make_server(if let Some(poolname) = poolname {
+                Some(buckle::config::Config {
+                    socket: buckle::testutil::find_listener()?,
+                    zfs: ZFSConfig { pool: poolname },
+                    log_level: buckle::config::LogLevel::Error,
+                })
+            } else {
+                None
             })
-        } else {
-            None
-        })
-        .await?,
+            .await?,
+            charon: Default::default(),
+        },
+
         db: dbfile,
         signing_key: key.to_vec(),
         signing_key_salt: salt.to_vec(),
