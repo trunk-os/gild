@@ -36,6 +36,7 @@ pub struct PingResult {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct HealthStatus {
     pub buckle: Health,
+    pub charon: Health,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

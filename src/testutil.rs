@@ -11,7 +11,7 @@ use serde::{
     de::{Deserialize, DeserializeOwned},
     Serialize,
 };
-use std::{net::SocketAddr, sync::Arc};
+use std::{net::SocketAddr, path::PathBuf, sync::Arc};
 use tempfile::NamedTempFile;
 
 pub async fn find_listener() -> Result<SocketAddr> {
@@ -53,7 +53,7 @@ pub async fn make_config(addr: Option<SocketAddr>, poolname: Option<String>) -> 
                 None
             })
             .await?,
-            charon: Default::default(),
+            charon: start_charon("testdata/charon".into()).await?,
         },
 
         db: dbfile,
@@ -74,6 +74,26 @@ pub async fn start_server(poolname: Option<String>) -> Result<SocketAddr> {
     tokio::spawn(call);
     tokio::time::sleep(std::time::Duration::from_secs(1)).await;
     Ok(ret)
+}
+
+pub async fn start_charon(registry: PathBuf) -> Result<PathBuf> {
+    std::fs::create_dir_all("tmp")?;
+    let tf = NamedTempFile::new_in("tmp")?;
+    let (_, path) = tf.keep()?;
+    let p2 = path.clone();
+    tokio::spawn(async move {
+        charon::Server::new(charon::Config {
+            registry,
+            socket: p2,
+            log_level: None,
+            debug: Some(true),
+        })
+        .start()
+        .unwrap()
+        .await
+    });
+
+    Ok(path)
 }
 
 pub struct TestClient {

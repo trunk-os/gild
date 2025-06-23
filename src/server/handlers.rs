@@ -21,21 +21,33 @@ pub(crate) async fn ping(
 ) -> Result<CborOut<PingResult>> {
     Ok(CborOut(if user.is_some() {
         let start = std::time::Instant::now();
-        let result = state.buckle.status().await?.ping().await;
+        let buckle = state.buckle.status().await?.ping().await;
+        let buckle_latency = (std::time::Instant::now() - start).as_millis() as u64;
 
-        let mut error = None;
+        let mut buckle_error = None;
+        let mut charon_error = None;
         let mut info = None;
 
-        match result {
+        match buckle {
             Ok(result) => info = Some(result.info.unwrap_or_default().into()),
-            Err(e) => error = Some(e.to_string()),
+            Err(e) => buckle_error = Some(e.to_string()),
         }
+
+        let start = std::time::Instant::now();
+        if let Err(e) = state.charon.status().await?.ping().await {
+            charon_error = Some(e.to_string())
+        }
+        let charon_latency = (std::time::Instant::now() - start).as_millis() as u64;
 
         PingResult {
             health: Some(HealthStatus {
                 buckle: Health {
-                    latency: Some((std::time::Instant::now() - start).as_millis() as u64),
-                    error,
+                    latency: Some(buckle_latency),
+                    error: buckle_error,
+                },
+                charon: Health {
+                    latency: Some(charon_latency),
+                    error: charon_error,
                 },
             }),
             info,
