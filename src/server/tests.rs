@@ -1,3 +1,76 @@
+mod packages {
+    use charon::{InputType, PackageTitle, Prompt, PromptCollection};
+
+    use crate::{
+        db::models::User,
+        server::messages::*,
+        testutil::{start_server, TestClient},
+    };
+
+    #[tokio::test]
+    async fn get_prompts() {
+        let mut client = TestClient::new(start_server(None).await.unwrap());
+
+        let login = User {
+            username: "test-login".into(),
+            plaintext_password: Some("test-password".into()),
+            ..Default::default()
+        };
+        assert!(client.put::<User, User>("/users", login).await.is_ok());
+
+        assert!(client
+            .post::<PackageTitle, PromptCollection>(
+                "/packages/prompts",
+                PackageTitle {
+                    name: "with-prompts".into(),
+                    version: "0.0.1".into()
+                }
+            )
+            .await
+            .is_err());
+
+        client
+            .login(Authentication {
+                username: "test-login".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap();
+
+        let collection = client
+            .post::<PackageTitle, PromptCollection>(
+                "/packages/prompts",
+                PackageTitle {
+                    name: "with-prompts".into(),
+                    version: "0.0.1".into(),
+                },
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(
+            collection,
+            PromptCollection(vec![
+                Prompt {
+                    template: "private_path".into(),
+                    question: "Where do you want this mounted?".into(),
+                    input_type: InputType::Name,
+                },
+                Prompt {
+                    template: "private_size".into(),
+                    question: "How big should it be?".into(),
+                    input_type: InputType::Integer,
+                },
+                Prompt {
+                    template: "private_recreate".into(),
+                    question: "Should we recreate this volume if it already exists?".into(),
+                    input_type: InputType::Boolean,
+                },
+            ])
+        )
+    }
+}
+
 mod service {
     use buckle::client::Info;
 

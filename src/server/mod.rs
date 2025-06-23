@@ -47,7 +47,7 @@ impl Server {
         Ok(Self {
             router: Router::new()
                 //.route("/packages/install", post(install_package))
-                .route("/packages/prompts", get(get_prompts))
+                .route("/packages/prompts", post(get_prompts))
                 //.route("/packages/set_responses", post(set_responses))
                 .route("/systemd/list", get(list_units))
                 .route("/systemd/set_unit", post(set_unit))
