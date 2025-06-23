@@ -13,7 +13,7 @@ use axum::{
     Router,
 };
 use axum_support::WithLog;
-use buckle::client::Client;
+use buckle::client::Client as BuckleClient;
 use http::{header::*, Method};
 use std::sync::Arc;
 use tower::ServiceBuilder;
@@ -23,7 +23,7 @@ use tracing::Level;
 
 #[derive(Debug, Clone)]
 pub struct ServerState {
-    client: Client,
+    client: BuckleClient,
     db: DB,
     config: Config,
 }

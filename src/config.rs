@@ -6,6 +6,8 @@ use tracing::info;
 use tracing_subscriber::FmtSubscriber;
 
 const DEFAULT_BUCKLE_PATH: &str = "/tmp/buckled.sock";
+#[allow(unused)]
+const DEFAULT_CHARON_PATH: &str = "/tmp/charond.sock";
 const DEFAULT_DB: &str = "/gild.db";
 const DEFAULT_LISTEN: &str = "0.0.0.0:3000";
 
@@ -13,7 +15,7 @@ fn default_db() -> std::path::PathBuf {
     DEFAULT_DB.into()
 }
 
-fn default_socket() -> std::path::PathBuf {
+fn default_buckle_socket() -> std::path::PathBuf {
     DEFAULT_BUCKLE_PATH.into()
 }
 
@@ -31,7 +33,7 @@ fn default_random() -> Vec<u8> {
 pub struct Config {
     #[serde(default = "default_listen")]
     pub listen: SocketAddr,
-    #[serde(default = "default_socket")]
+    #[serde(default = "default_buckle_socket")]
     pub socket: std::path::PathBuf,
     #[serde(default = "default_db")]
     pub db: std::path::PathBuf,
@@ -46,7 +48,7 @@ impl Default for Config {
     fn default() -> Self {
         let mut this = Self {
             listen: default_listen(),
-            socket: default_socket(),
+            socket: default_buckle_socket(),
             db: default_db(),
             signing_key: default_random(),
             signing_key_salt: default_random(),
@@ -64,6 +66,7 @@ impl Config {
             .with_max_level(Into::<tracing::Level>::into(self.log_level.clone()))
             .finish();
         tracing::subscriber::set_global_default(subscriber)?;
+
         info!("Configuration parsed");
         Ok(())
     }
