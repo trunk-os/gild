@@ -400,3 +400,17 @@ pub(crate) async fn get_prompts(
             .await?,
     ))
 }
+
+pub(crate) async fn set_responses(
+    State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
+    Cbor(responses): Cbor<PromptResponsesWithName>,
+) -> Result<CborOut<()>> {
+    state
+        .charon
+        .query()
+        .await?
+        .set_responses(&responses.name, responses.responses)
+        .await?;
+    Ok(CborOut(()))
+}

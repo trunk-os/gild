@@ -46,3 +46,9 @@ pub struct Health {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub latency: Option<u64>,
 }
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct PromptResponsesWithName {
+    pub name: String,
+    pub responses: charon::PromptResponses,
+}
