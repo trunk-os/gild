@@ -23,7 +23,7 @@ use tracing::Level;
 
 #[derive(Debug, Clone)]
 pub struct ServerState {
-    client: BuckleClient,
+    buckle: BuckleClient,
     db: DB,
     config: Config,
 }
@@ -62,7 +62,7 @@ impl Server {
                 .route("/session/login", post(login))
                 .route("/session/me", get(me))
                 .with_state(Arc::new(ServerState {
-                    client: config.get_client()?,
+                    buckle: config.buckle()?,
                     db: config.get_db().await?,
                     config: config.clone(),
                 }))

@@ -121,7 +121,7 @@ impl Config {
         crate::db::DB::new(self.clone()).await
     }
 
-    pub(crate) fn get_client(&self) -> Result<buckle::client::Client> {
+    pub(crate) fn buckle(&self) -> Result<buckle::client::Client> {
         buckle::client::Client::new(self.sockets.buckle.clone())
     }
 }

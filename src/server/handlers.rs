@@ -21,7 +21,7 @@ pub(crate) async fn ping(
 ) -> Result<CborOut<PingResult>> {
     Ok(CborOut(if user.is_some() {
         let start = std::time::Instant::now();
-        let result = state.client.status().await?.ping().await;
+        let result = state.buckle.status().await?.ping().await;
 
         let mut error = None;
         let mut info = None;
@@ -84,7 +84,7 @@ pub(crate) async fn zfs_list(
         Some(filter)
     };
 
-    Ok(CborOut(state.client.zfs().await?.list(filter).await?))
+    Ok(CborOut(state.buckle.zfs().await?.list(filter).await?))
 }
 
 pub(crate) async fn zfs_create_dataset(
@@ -97,7 +97,7 @@ pub(crate) async fn zfs_create_dataset(
         .with_entry("Creating dataset")
         .with_data(&dataset)?
         .clone();
-    state.client.zfs().await?.create_dataset(dataset).await?;
+    state.buckle.zfs().await?.create_dataset(dataset).await?;
     Ok(state.with_log(Ok(()), log))
 }
 
@@ -111,7 +111,7 @@ pub(crate) async fn zfs_modify_dataset(
         .with_entry("Modifying dataset")
         .with_data(&dataset)?
         .clone();
-    state.client.zfs().await?.modify_dataset(dataset).await?;
+    state.buckle.zfs().await?.modify_dataset(dataset).await?;
     Ok(state.with_log(Ok(()), log))
 }
 
@@ -125,7 +125,7 @@ pub(crate) async fn zfs_create_volume(
         .with_entry("Creating volume")
         .with_data(&volume)?
         .clone();
-    state.client.zfs().await?.create_volume(volume).await?;
+    state.buckle.zfs().await?.create_volume(volume).await?;
     Ok(state.with_log(Ok(()), log))
 }
 
@@ -139,7 +139,7 @@ pub(crate) async fn zfs_modify_volume(
         .with_entry("Modifying volume")
         .with_data(&volume)?
         .clone();
-    state.client.zfs().await?.modify_volume(volume).await?;
+    state.buckle.zfs().await?.modify_volume(volume).await?;
     Ok(state.with_log(Ok(()), log))
 }
 
@@ -157,7 +157,7 @@ pub(crate) async fn zfs_destroy(
         .with_data(&map)?
         .clone();
 
-    state.client.zfs().await?.destroy(name).await?;
+    state.buckle.zfs().await?.destroy(name).await?;
     Ok(state.with_log(Ok(()), log))
 }
 
@@ -358,7 +358,7 @@ pub(crate) async fn list_units(
     Account(_): Account<User>,
     Cbor(filter): Cbor<Option<String>>,
 ) -> Result<CborOut<Vec<buckle::systemd::Unit>>> {
-    Ok(CborOut(state.client.systemd().await?.list(filter).await?))
+    Ok(CborOut(state.buckle.systemd().await?.list(filter).await?))
 }
 
 pub(crate) async fn set_unit(
@@ -366,6 +366,6 @@ pub(crate) async fn set_unit(
     Account(_): Account<User>,
     Cbor(settings): Cbor<buckle::systemd::UnitSettings>,
 ) -> Result<CborOut<()>> {
-    state.client.systemd().await?.set_unit(settings).await?;
+    state.buckle.systemd().await?.set_unit(settings).await?;
     Ok(CborOut(()))
 }
