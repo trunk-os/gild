@@ -37,7 +37,6 @@ pub struct SocketConfig {
     #[serde(default = "default_buckle_socket")]
     pub buckle: std::path::PathBuf,
     #[serde(default = "default_charon_socket")]
-    #[allow(unused)]
     pub charon: std::path::PathBuf,
 }
 
@@ -123,5 +122,10 @@ impl Config {
 
     pub(crate) fn buckle(&self) -> Result<buckle::client::Client> {
         buckle::client::Client::new(self.sockets.buckle.clone())
+    }
+
+    #[allow(unused)]
+    pub(crate) fn charon(&self) -> Result<charon::Client> {
+        charon::Client::new(self.sockets.charon.clone())
     }
 }
