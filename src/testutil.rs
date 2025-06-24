@@ -87,6 +87,7 @@ pub async fn start_charon(registry: PathBuf) -> Result<PathBuf> {
             socket: p2,
             log_level: None,
             debug: Some(true),
+            systemd_root: None,
         })
         .start()
         .unwrap()
