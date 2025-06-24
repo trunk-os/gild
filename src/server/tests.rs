@@ -128,6 +128,48 @@ mod packages {
             .await
             .is_ok());
     }
+
+    #[tokio::test]
+    async fn install() {
+        let mut client = TestClient::new(start_server(None).await.unwrap());
+
+        let login = User {
+            username: "test-login".into(),
+            plaintext_password: Some("test-password".into()),
+            ..Default::default()
+        };
+        assert!(client.put::<User, User>("/users", login).await.is_ok());
+
+        assert!(client
+            .post::<PackageTitle, ()>(
+                "/packages/install",
+                PackageTitle {
+                    name: "podman-test".into(),
+                    version: "0.0.1".into(),
+                }
+            )
+            .await
+            .is_err());
+
+        client
+            .login(Authentication {
+                username: "test-login".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap();
+
+        assert!(client
+            .post::<PackageTitle, ()>(
+                "/packages/install",
+                PackageTitle {
+                    name: "podman-test".into(),
+                    version: "0.0.1".into(),
+                }
+            )
+            .await
+            .is_ok());
+    }
 }
 
 mod service {

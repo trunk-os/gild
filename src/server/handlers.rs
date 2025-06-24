@@ -414,3 +414,19 @@ pub(crate) async fn set_responses(
         .await?;
     Ok(CborOut(()))
 }
+
+pub(crate) async fn install_package(
+    State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
+    Cbor(pkg): Cbor<charon::PackageTitle>,
+) -> Result<CborOut<()>> {
+    state
+        .charon
+        .control()
+        .await?
+        // FIXME: need a better solution for volume roots. Probably Option<>. They're only required
+        // for VMs. this is a complete hack since we aren't using them yet.
+        .write_unit(&pkg.name, &pkg.version, "/tmp/volroot".into())
+        .await?;
+    Ok(CborOut(()))
+}

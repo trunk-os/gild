@@ -46,7 +46,7 @@ impl Server {
     pub async fn new(config: Config) -> Result<Self> {
         Ok(Self {
             router: Router::new()
-                //.route("/packages/install", post(install_package))
+                .route("/packages/install", post(install_package))
                 .route("/packages/prompts", post(get_prompts))
                 .route("/packages/set_responses", post(set_responses))
                 .route("/systemd/list", get(list_units))
