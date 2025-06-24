@@ -430,3 +430,17 @@ pub(crate) async fn install_package(
         .await?;
     Ok(CborOut(()))
 }
+
+pub(crate) async fn uninstall_package(
+    State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
+    Cbor(pkg): Cbor<charon::PackageTitle>,
+) -> Result<CborOut<()>> {
+    state
+        .charon
+        .control()
+        .await?
+        .remove_unit(&pkg.name, &pkg.version)
+        .await?;
+    Ok(CborOut(()))
+}
