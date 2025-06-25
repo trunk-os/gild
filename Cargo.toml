@@ -32,6 +32,8 @@ jwt = "*"
 problem_details = { version = "*", features = [ "serde", "json", "axum" ] }
 tracing = "*"
 tracing-subscriber = "*"
+futures-util = "*"
+tokio-stream = "*"
 
 [dev-dependencies]
 reqwest = { version = "*", features = [ "default", "cookies" ] }

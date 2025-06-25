@@ -151,6 +151,17 @@ mod packages {
             .await
             .is_err());
 
+        assert!(client
+            .post::<PackageTitle, ()>(
+                "/packages/uninstall",
+                PackageTitle {
+                    name: "podman-test".into(),
+                    version: "0.0.1".into(),
+                }
+            )
+            .await
+            .is_err());
+
         client
             .login(Authentication {
                 username: "test-login".into(),
@@ -162,6 +173,17 @@ mod packages {
         assert!(client
             .post::<PackageTitle, ()>(
                 "/packages/install",
+                PackageTitle {
+                    name: "podman-test".into(),
+                    version: "0.0.1".into(),
+                }
+            )
+            .await
+            .is_ok());
+
+        assert!(client
+            .post::<PackageTitle, ()>(
+                "/packages/uninstall",
                 PackageTitle {
                     name: "podman-test".into(),
                     version: "0.0.1".into(),
