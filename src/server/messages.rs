@@ -13,6 +13,12 @@ pub struct Pagination {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct LogParameters {
+    pub name: String,
+    pub count: u64,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct Token {
     pub(crate) token: String,
 }

@@ -390,13 +390,14 @@ pub(crate) async fn set_unit(
 pub(crate) async fn unit_log(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
+    Cbor(params): Cbor<LogParameters>,
 ) -> Sse<impl Stream<Item = std::result::Result<Event, axum::Error>>> {
     let log = state
         .buckle
         .systemd()
         .await
         .unwrap()
-        .unit_log("docker.service", 100)
+        .unit_log(&params.name, params.count)
         .await
         .unwrap();
 
