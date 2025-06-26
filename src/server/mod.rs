@@ -51,7 +51,7 @@ impl Server {
                 .route("/packages/prompts", post(get_prompts))
                 .route("/packages/set_responses", post(set_responses))
                 .route("/systemd/log", post(unit_log))
-                .route("/systemd/list", get(list_units))
+                .route("/systemd/list", post(list_units))
                 .route("/systemd/set_unit", post(set_unit))
                 .route("/status/ping", get(ping))
                 .route("/status/log", post(log))
