@@ -337,9 +337,9 @@ dependencies = [
 
 [[package]]
 name = "axum-serde"
-version = "0.8.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29617f4d5e0ec3c0fc486b3facd9d04f82742822bef65fa9ff461fde69e248e1"
+checksum = "b11d2c78d4f8ba484030e6fd3932ecefe82a1af199b8604c21d02031e2ff5af3"
 dependencies = [
  "axum-core",
  "bytes",
@@ -347,7 +347,7 @@ dependencies = [
  "http",
  "mime",
  "serde",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -426,7 +426,7 @@ dependencies = [
 [[package]]
 name = "buckle"
 version = "0.1.0"
-source = "git+https://github.com/trunk-os/buckle#ec06d795474fc28fa8895e14c5e51555de22224f"
+source = "git+https://github.com/trunk-os/buckle#ea7add0219d2524954cca00aef9cb9ce3a870971"
 dependencies = [
  "anyhow",
  "clap",

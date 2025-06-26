@@ -15,7 +15,7 @@ pub struct Pagination {
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct LogParameters {
     pub name: String,
-    pub count: u64,
+    pub count: usize,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
