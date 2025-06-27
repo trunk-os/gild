@@ -54,10 +54,57 @@ mod systemd {
     }
 
     #[tokio::test]
-    async fn log() {}
+    async fn log() {
+        let mut client = TestClient::new(start_server(None).await.unwrap());
+        let login = User {
+            username: "test-login".into(),
+            plaintext_password: Some("test-password".into()),
+            ..Default::default()
+        };
+        assert!(client.put::<User, User>("/users", login).await.is_ok());
+
+        assert!(client
+            .post::<Option<String>, buckle::systemd::Unit>("/systemd/log", None)
+            .await
+            .is_err());
+
+        client
+            .login(Authentication {
+                username: "test-login".into(),
+                password: "test-password".into(),
+            })
+            .await
+            .unwrap();
+
+        let list = client
+            .post::<Option<String>, Vec<buckle::systemd::Unit>>("/systemd/list", None)
+            .await
+            .unwrap();
+
+        assert!(!list.is_empty());
+        assert_eq!(
+            list.iter()
+                .filter(|x| x.name == "network.target")
+                .collect::<Vec<&buckle::systemd::Unit>>()
+                .len(),
+            1
+        );
+
+        let list = client
+            .post::<Option<String>, Vec<buckle::systemd::Unit>>(
+                "/systemd/list",
+                Some("network.target".into()),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(list.len(), 1);
+    }
 
     #[tokio::test]
-    async fn set_unit() {}
+    async fn set_unit() {
+        // FIXME: not sure how to test this without potentially harmful side effects yet
+    }
 }
 
 mod packages {

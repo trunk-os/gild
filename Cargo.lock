@@ -426,7 +426,7 @@ dependencies = [
 [[package]]
 name = "buckle"
 version = "0.1.0"
-source = "git+https://github.com/trunk-os/buckle#101983aabc9c15d1dd1137d4930672e18e88d83a"
+source = "git+https://github.com/trunk-os/buckle#2b53f07606222c611d30e26f44f690be1e6da299"
 dependencies = [
  "anyhow",
  "clap",
@@ -1645,9 +1645,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.9.0"
+version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cea70ddb795996207ad57735b50c5982d8844f38ba9ee5f1aedcfb708a2aa11e"
+checksum = "fe4cd85333e22411419a0bcae1297d25e58c9443848b11dc6a86fefe8c78a661"
 dependencies = [
  "equivalent",
  "hashbrown",

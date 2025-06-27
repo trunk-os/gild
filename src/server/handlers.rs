@@ -398,7 +398,7 @@ pub(crate) async fn unit_log(
         .systemd()
         .await
         .unwrap()
-        .unit_log(&params.name, params.count)
+        .unit_log(&params.name, params.count, None, None)
         .await
         .unwrap();
 
