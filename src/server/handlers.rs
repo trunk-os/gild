@@ -1,18 +1,13 @@
-use crate::db::models::{AuditLog, Session, User};
-use hmac::{Hmac, Mac};
-use jwt::SignWithKey;
-use tokio_stream::Stream;
-use tokio_stream::StreamExt;
-
 use super::{axum_support::*, messages::*, ServerState};
+use crate::db::models::{AuditLog, Session, User};
 use anyhow::anyhow;
-use axum::{
-    extract::{Path, State},
-    response::{sse::Event, Sse},
-};
+use axum::extract::{Path, State};
 use axum_serde::Cbor;
 use buckle::client::ZFSStat;
+use hmac::{Hmac, Mac};
+use jwt::SignWithKey;
 use std::{collections::HashMap, ops::Deref, sync::Arc};
+use tokio_stream::StreamExt;
 use validator::Validate;
 use welds::{exts::VecStateExt, state::DbState};
 
@@ -392,8 +387,8 @@ pub(crate) async fn unit_log(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
     Cbor(params): Cbor<LogParameters>,
-) -> Sse<impl Stream<Item = std::result::Result<Event, axum::Error>>> {
-    let log = state
+) -> Result<CborOut<Vec<buckle::systemd::LogMessage>>> {
+    let mut log = state
         .buckle
         .systemd()
         .await
@@ -402,9 +397,14 @@ pub(crate) async fn unit_log(
         .await
         .unwrap();
 
-    Sse::new(log.map(|i| {
-        Event::default().json_data::<buckle::systemd::LogMessage>(i.unwrap_or_default().into())
-    }))
+    // NOTE: this value can get very large and potentially cause a lot of memory usage if the count
+    // is too high.
+    let mut v = Vec::with_capacity(params.count);
+
+    while let Some(Ok(entry)) = log.next().await {
+        v.push(entry.into())
+    }
+    Ok(CborOut(v))
 }
 
 //
