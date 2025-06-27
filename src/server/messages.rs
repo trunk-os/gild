@@ -16,6 +16,8 @@ pub struct Pagination {
 pub struct LogParameters {
     pub name: String,
     pub count: usize,
+    pub cursor: Option<String>,
+    pub direction: Option<buckle::systemd::LogDirection>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
