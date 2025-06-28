@@ -456,11 +456,33 @@ pub(crate) async fn get_responses(
     ))
 }
 
+pub(crate) async fn installed(
+    State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
+    Cbor(pkg): Cbor<charon::PackageTitle>,
+) -> Result<CborOut<bool>> {
+    Ok(CborOut(
+        state
+            .charon
+            .control()
+            .await?
+            .installed(&pkg.name, &pkg.version)
+            .await?,
+    ))
+}
+
 pub(crate) async fn install_package(
     State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
     Cbor(pkg): Cbor<charon::PackageTitle>,
 ) -> Result<CborOut<()>> {
+    state
+        .charon
+        .control()
+        .await?
+        .install(&pkg.name, &pkg.version)
+        .await?;
+
     state
         .charon
         .control()
@@ -477,6 +499,13 @@ pub(crate) async fn uninstall_package(
     Account(_): Account<User>,
     Cbor(pkg): Cbor<charon::PackageTitle>,
 ) -> Result<CborOut<()>> {
+    state
+        .charon
+        .control()
+        .await?
+        .uninstall(&pkg.name, &pkg.version)
+        .await?;
+
     state
         .charon
         .control()

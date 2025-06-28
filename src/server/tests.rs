@@ -305,6 +305,17 @@ mod packages {
             .is_ok());
 
         assert!(client
+            .post::<PackageTitle, bool>(
+                "/packages/installed",
+                PackageTitle {
+                    name: "podman-test".into(),
+                    version: "0.0.1".into(),
+                }
+            )
+            .await
+            .unwrap());
+
+        assert!(client
             .post::<PackageTitle, ()>(
                 "/packages/uninstall",
                 PackageTitle {
