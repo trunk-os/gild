@@ -404,6 +404,7 @@ pub(crate) async fn unit_log(
     while let Some(Ok(entry)) = log.next().await {
         v.push(entry.into())
     }
+
     Ok(CborOut(v))
 }
 
@@ -438,6 +439,21 @@ pub(crate) async fn set_responses(
         .set_responses(&responses.name, responses.responses)
         .await?;
     Ok(CborOut(()))
+}
+
+pub(crate) async fn get_responses(
+    State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
+    Cbor(title): Cbor<charon::PackageTitle>,
+) -> Result<CborOut<charon::PromptResponses>> {
+    Ok(CborOut(
+        state
+            .charon
+            .query()
+            .await?
+            .get_responses(&title.name)
+            .await?,
+    ))
 }
 
 pub(crate) async fn install_package(

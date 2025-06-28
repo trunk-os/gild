@@ -236,6 +236,20 @@ mod packages {
             )
             .await
             .is_ok());
+
+        assert_eq!(
+            responses,
+            client
+                .post::<charon::PackageTitle, charon::PromptResponses>(
+                    "/packages/get_responses",
+                    charon::PackageTitle {
+                        name: "with-prompts".into(),
+                        version: "".into(),
+                    }
+                )
+                .await
+                .unwrap()
+        );
     }
 
     #[tokio::test]

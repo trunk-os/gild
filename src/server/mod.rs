@@ -49,6 +49,7 @@ impl Server {
                 .route("/packages/uninstall", post(uninstall_package))
                 .route("/packages/install", post(install_package))
                 .route("/packages/prompts", post(get_prompts))
+                .route("/packages/get_responses", post(get_responses))
                 .route("/packages/set_responses", post(set_responses))
                 .route("/systemd/log", post(unit_log))
                 .route("/systemd/list", post(list_units))

@@ -29,7 +29,6 @@ pub async fn make_config(addr: Option<SocketAddr>, poolname: Option<String>) -> 
     std::fs::create_dir_all("tmp")?;
     let tf = NamedTempFile::new_in("tmp")?;
     let (_, dbfile) = tf.keep()?;
-    eprintln!("{}", dbfile.display());
 
     let mut key: [u8; 64] = [0u8; 64];
     let mut salt: [u8; 32] = [0u8; 32];
