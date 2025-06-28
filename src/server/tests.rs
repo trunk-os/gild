@@ -315,6 +315,17 @@ mod packages {
             .await
             .unwrap());
 
+        assert_eq!(
+            client
+                .get::<Vec<PackageTitle>>("/packages/list_installed")
+                .await
+                .unwrap(),
+            vec![PackageTitle {
+                name: "podman-test".into(),
+                version: "0.0.1".into()
+            }]
+        );
+
         assert!(client
             .post::<PackageTitle, ()>(
                 "/packages/uninstall",
@@ -325,6 +336,14 @@ mod packages {
             )
             .await
             .is_ok());
+
+        assert_eq!(
+            client
+                .get::<Vec<PackageTitle>>("/packages/list_installed")
+                .await
+                .unwrap(),
+            vec![]
+        );
     }
 }
 

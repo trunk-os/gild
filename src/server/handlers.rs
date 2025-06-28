@@ -4,6 +4,7 @@ use anyhow::anyhow;
 use axum::extract::{Path, State};
 use axum_serde::Cbor;
 use buckle::client::ZFSStat;
+use charon::PackageTitle;
 use hmac::{Hmac, Mac};
 use jwt::SignWithKey;
 use std::{collections::HashMap, ops::Deref, sync::Arc};
@@ -454,6 +455,13 @@ pub(crate) async fn get_responses(
             .get_responses(&title.name)
             .await?,
     ))
+}
+
+pub(crate) async fn list_installed(
+    State(state): State<Arc<ServerState>>,
+    Account(_): Account<User>,
+) -> Result<CborOut<Vec<PackageTitle>>> {
+    Ok(CborOut(state.charon.query().await?.list_installed().await?))
 }
 
 pub(crate) async fn installed(
