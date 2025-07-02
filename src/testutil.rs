@@ -82,7 +82,10 @@ pub async fn start_charon(registry: PathBuf) -> Result<PathBuf> {
     let p2 = path.clone();
     tokio::spawn(async move {
         charon::Server::new(charon::Config {
-            registry,
+            registry: charon::RegistryConfig {
+                path: registry,
+                url: None,
+            },
             socket: p2,
             log_level: None,
             debug: Some(true),
