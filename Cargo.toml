@@ -7,6 +7,7 @@ edition = "2024"
 buckle = { version = "*", git = "https://github.com/trunk-os/buckle", features = [ "zfs", "test" ] }
 charon = { version = "*", git = "https://github.com/trunk-os/charon", features = [] }
 axum = { version = "*", features = [ "tokio", "http1", "http2", "macros" ] }
+axum-server = "*"
 axum-serde = { version = "*", features = [ "cbor" ] }
 serde = { version = "*", features = [ "derive" ] }
 serde_yaml_ng = "*"

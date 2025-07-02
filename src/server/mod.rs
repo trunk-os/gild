@@ -107,7 +107,35 @@ impl Server {
     }
 
     pub async fn start(&self) -> Result<()> {
-        let listener = tokio::net::TcpListener::bind(self.config.listen).await?;
-        Ok(axum::serve(listener, self.router.clone()).await?)
+        let handle = axum_server::Handle::new();
+        tokio::spawn(shutdown_signal(handle.clone()));
+        Ok(axum_server::bind(self.config.listen)
+            .handle(handle)
+            .serve(self.router.clone().into_make_service())
+            .await?)
     }
+}
+
+async fn shutdown_signal(handle: axum_server::Handle) {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("failed to install CTRL+C signal handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+
+    tracing::warn!("signal received, starting graceful shutdown");
+    handle.graceful_shutdown(Some(std::time::Duration::from_secs(10)));
 }
