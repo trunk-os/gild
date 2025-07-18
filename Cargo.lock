@@ -442,7 +442,7 @@ dependencies = [
 [[package]]
 name = "buckle"
 version = "0.1.0"
-source = "git+https://github.com/trunk-os/buckle#e7e4c659d0d597f16397558a06f83bc7ac8d197d"
+source = "git+https://github.com/trunk-os/buckle#42b658563fc8767b10015fc626d7a45c824a0dc9"
 dependencies = [
  "anyhow",
  "clap",
@@ -513,7 +513,7 @@ checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 [[package]]
 name = "charon"
 version = "0.1.0"
-source = "git+https://github.com/trunk-os/charon#af62fe86e55756b69a2985900d42e53059601701"
+source = "git+https://github.com/trunk-os/charon#aff71b1c918864f56438f2544433afd618a6db1d"
 dependencies = [
  "anyhow",
  "buckle",
