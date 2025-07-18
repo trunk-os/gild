@@ -475,7 +475,8 @@ pub(crate) async fn installed(
             .control()
             .await?
             .installed(&pkg.name, &pkg.version)
-            .await?,
+            .await?
+            .is_some(),
     ))
 }
 
