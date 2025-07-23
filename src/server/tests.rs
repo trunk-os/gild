@@ -261,7 +261,8 @@ mod packages {
             plaintext_password: Some("test-password".into()),
             ..Default::default()
         };
-        assert!(client.put::<User, User>("/users", login).await.is_ok());
+
+        client.put::<User, User>("/users", login).await.unwrap();
 
         assert!(client
             .post::<PackageTitle, ()>(
@@ -293,27 +294,27 @@ mod packages {
             .await
             .unwrap();
 
-        assert!(client
+        client
             .post::<PackageTitle, ()>(
                 "/packages/install",
                 PackageTitle {
                     name: "podman-test".into(),
                     version: "0.0.1".into(),
-                }
+                },
             )
             .await
-            .is_ok());
+            .unwrap();
 
-        assert!(client
+        client
             .post::<PackageTitle, bool>(
                 "/packages/installed",
                 PackageTitle {
                     name: "podman-test".into(),
                     version: "0.0.1".into(),
-                }
+                },
             )
             .await
-            .unwrap());
+            .unwrap();
 
         assert_eq!(
             client
@@ -326,16 +327,16 @@ mod packages {
             }]
         );
 
-        assert!(client
+        client
             .post::<PackageTitle, ()>(
                 "/packages/uninstall",
                 PackageTitle {
                     name: "podman-test".into(),
                     version: "0.0.1".into(),
-                }
+                },
             )
             .await
-            .is_ok());
+            .unwrap();
 
         assert_eq!(
             client
