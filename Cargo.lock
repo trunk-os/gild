@@ -511,7 +511,7 @@ checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
 [[package]]
 name = "charon"
 version = "0.1.0"
-source = "git+https://github.com/trunk-os/charon#4f1178ff7bbc05c0d23d3a05287cc8276fdd9327"
+source = "git+https://github.com/trunk-os/charon#b9e63d921708641e2fb9758bc1e24e844da3ca95"
 dependencies = [
  "anyhow",
  "buckle",

@@ -465,11 +465,10 @@ pub(crate) async fn list_installed(
 }
 
 pub(crate) async fn list_packages(
-    State(_state): State<Arc<ServerState>>,
+    State(state): State<Arc<ServerState>>,
     Account(_): Account<User>,
 ) -> Result<CborOut<Vec<PackageTitle>>> {
-    // FIXME: replace with charon call
-    Ok(CborOut(Default::default()))
+    Ok(CborOut(state.charon.query().await?.list().await?))
 }
 
 pub(crate) async fn installed(
