@@ -53,6 +53,7 @@ impl Server {
                 .route("/packages/set_responses", post(set_responses))
                 .route("/packages/installed", post(installed))
                 .route("/packages/list_installed", get(list_installed))
+                .route("/packages/list", get(list_packages))
                 .route("/systemd/log", post(unit_log))
                 .route("/systemd/list", post(list_units))
                 .route("/systemd/set_unit", post(set_unit))
